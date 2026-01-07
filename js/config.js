@@ -2,8 +2,8 @@
 const CONFIG = {
     // Configurações do Supabase (serão carregadas do localStorage)
     supabase: {
-        url: localStorage.getItem('supabaseUrl') || '',
-        key: localStorage.getItem('supabaseKey') || ''
+        url: localStorage.getItem('https://ktjpphfxulkymobkjvqo.supabase.co') || '',
+        key: localStorage.getItem('sb_secret_vt_34shHD2vjIdn4rso3lg_Xc-KgTdW') || ''
     },
     
     // Usuário atual
@@ -25,8 +25,8 @@ const CONFIG = {
 
 // Salvar configurações do Supabase
 function saveSupabaseConfig(url, key) {
-    localStorage.setItem('supabaseUrl', url);
-    localStorage.setItem('supabaseKey', key);
+    localStorage.setItem('https://ktjpphfxulkymobkjvqo.supabase.co', url);
+    localStorage.setItem('sb_secret_vt_34shHD2vjIdn4rso3lg_Xc-KgTdW', key);
     CONFIG.supabase.url = url;
     CONFIG.supabase.key = key;
 }

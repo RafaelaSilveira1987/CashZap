@@ -247,7 +247,7 @@ async function getUserByPhone(phone) {
         const { data, error } = await supabaseClient
             .from('usuarios')
             .select('*')
-            .eq('telefone', phone)
+            .eq('celular', phone)
             .single();
         
         if (error) throw error;

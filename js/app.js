@@ -882,7 +882,7 @@ function renderUsersTable(users) {
         <tr>
             <td>${u.id}</td>
             <td>${u.nome || '-'}</td>
-            <td>${u.telefone || '-'}</td>
+            <td>${u.celular || '-'}</td>
             <td><span class="badge badge-${u.status}">${u.status === 'ativo' ? 'Ativo' : 'Inativo'}</span></td>
             <td>${formatDate(u.created_at)}</td>
             <td>

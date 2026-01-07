@@ -832,7 +832,7 @@ function renderTransactionsTable(transactions, tbodyId, showAllColumns = false) 
         <tr>
             <td>${formatDate(t.data)}</td>
             <td>${t.descricao}</td>
-            <td>${t.categoria_trasacoes?.descricao || 'Sem categoria'}</td>
+            <td>${t.categoria_trasacoes?.descricao || (Array.isArray(t.categoria_trasacoes) ? t.categoria_trasacoes[0]?.descricao : 'Sem categoria')}</td>
             ${showAllColumns ? `<td><span class="badge badge-${t.tipo}">${t.tipo === 'entrada' ? 'Receita' : 'Despesa'}</span></td>` : ''}
             ${showAllColumns ? `<td>${t.pagador || '-'}</td>` : ''}
             <td style="color: ${t.tipo === 'entrada' ? 'var(--success-color)' : 'var(--danger-color)'}; font-weight: 600;">

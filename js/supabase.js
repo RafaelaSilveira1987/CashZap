@@ -33,7 +33,7 @@ async function getTransactions(userId, startDate = null, endDate = null) {
     try {
         let query = supabaseClient
             .from('transacoes')
-            .select('*, categoria_trasacoes(descricao)')
+            .select('*, categoria_trasacoes!transacoes_categoria_id_fkey(descricao)')
             .eq('usuario_id', userId)
             .order('data', { ascending: false });
         
@@ -64,7 +64,7 @@ async function getTransactionsByType(userId, type, startDate = null, endDate = n
     try {
         let query = supabaseClient
             .from('transacoes')
-            .select('*, categoria_trasacoes(descricao)')
+            .select('*, categoria_trasacoes!transacoes_categoria_id_fkey(descricao)')
             .eq('usuario_id', userId)
             .eq('tipo', type)
             .order('data', { ascending: false });

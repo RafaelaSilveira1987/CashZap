@@ -3,9 +3,9 @@ const CONFIG = {
     // Configurações do Supabase (serão carregadas do localStorage)
     // Corrigido: Usando chaves genéricas para localStorage em vez de valores fixos
     supabase: {
-        url: localStorage.getItem('supabaseUrl') || 'https://ktjpphfxulkymobkjvqo.supabase.co',
-        key: localStorage.getItem('supabaseKey') || 'sb_secret_vt_34shHD2vjIdn4rso3lg_Xc-KgTdW'
-},
+        url: localStorage.getItem('supabaseUrl') || '',
+        key: localStorage.getItem('supabaseKey') || ''
+    },
     
     // Usuário atual
     currentUser: {

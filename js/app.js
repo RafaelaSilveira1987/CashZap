@@ -5,8 +5,14 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeApp() {
-    // Verificar se o usuário está logado
+    console.log('🚀 [APP] Inicializando aplicacao...');
+    
+    // Configurar botoes de login e configuracao
+    setupLoginButtons();
+    
+    // Verificar se o usuario esta logado
     if (!CONFIG.currentUser.id) {
+        console.log('👤 [APP] Usuario nao logado, mostrando tela de login');
         showLoginModal();
         return;
     }
@@ -282,6 +288,70 @@ function hideModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.classList.remove('active');
+    }
+}
+
+function setupLoginButtons() {
+    console.log('🔘 [APP] Configurando botoes de login...');
+    
+    const configBeforeLoginBtn = document.getElementById('configBeforeLoginBtn');
+    if (configBeforeLoginBtn) {
+        configBeforeLoginBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('⚙️ [APP] Abrindo modal de configuracao antes do login');
+            hideModal('loginModal');
+            showModal('configBeforeLoginModal');
+        });
+    }
+    
+    const closeConfigBeforeLoginModal = document.getElementById('closeConfigBeforeLoginModal');
+    if (closeConfigBeforeLoginModal) {
+        closeConfigBeforeLoginModal.addEventListener('click', function() {
+            console.log('❌ [APP] Fechando modal de configuracao');
+            hideModal('configBeforeLoginModal');
+            showModal('loginModal');
+        });
+    }
+    
+    const cancelConfigBeforeLoginBtn = document.getElementById('cancelConfigBeforeLoginBtn');
+    if (cancelConfigBeforeLoginBtn) {
+        cancelConfigBeforeLoginBtn.addEventListener('click', function() {
+            console.log('❌ [APP] Cancelando configuracao');
+            hideModal('configBeforeLoginModal');
+            showModal('loginModal');
+        });
+    }
+    
+    const configBeforeLoginForm = document.getElementById('configBeforeLoginForm');
+    if (configBeforeLoginForm) {
+        configBeforeLoginForm.addEventListener('submit', handleConfigBeforeLogin);
+    }
+}
+
+async function handleConfigBeforeLogin(e) {
+    e.preventDefault();
+    console.log('💾 [APP] Salvando configuracoes antes do login...');
+    
+    const url = document.getElementById('configBeforeLoginUrl').value.trim();
+    const key = document.getElementById('configBeforeLoginKey').value.trim();
+    
+    if (!url || !key) {
+        showNotification('Preencha todos os campos', 'error');
+        return;
+    }
+    
+    try {
+        saveSupabaseConfig(url, key);
+        showNotification('Configuracoes salvas com sucesso!', 'success');
+        console.log('✅ [APP] Configuracoes salvas, voltando ao login');
+        
+        setTimeout(() => {
+            hideModal('configBeforeLoginModal');
+            showModal('loginModal');
+        }, 1000);
+    } catch (error) {
+        console.error('❌ [APP] Erro ao salvar configuracoes:', error);
+        showNotification('Erro ao salvar configuracoes', 'error');
     }
 }
 

@@ -1,10 +1,11 @@
 // Configurações do Dashboard
 const CONFIG = {
     // Configurações do Supabase (serão carregadas do localStorage)
+    // Corrigido: Usando chaves genéricas para localStorage em vez de valores fixos
     supabase: {
-        url: localStorage.getItem('https://ktjpphfxulkymobkjvqo.supabase.co') || '',
-        key: localStorage.getItem('sb_secret_vt_34shHD2vjIdn4rso3lg_Xc-KgTdW') || ''
-    },
+        url: localStorage.getItem('supabaseUrl') || 'https://ktjpphfxulkymobkjvqo.supabase.co',
+        key: localStorage.getItem('supabaseKey') || 'sb_secret_vt_34shHD2vjIdn4rso3lg_Xc-KgTdW'
+},
     
     // Usuário atual
     currentUser: {
@@ -25,8 +26,8 @@ const CONFIG = {
 
 // Salvar configurações do Supabase
 function saveSupabaseConfig(url, key) {
-    localStorage.setItem('https://ktjpphfxulkymobkjvqo.supabase.co', url);
-    localStorage.setItem('sb_secret_vt_34shHD2vjIdn4rso3lg_Xc-KgTdW', key);
+    localStorage.setItem('supabaseUrl', url);
+    localStorage.setItem('supabaseKey', key);
     CONFIG.supabase.url = url;
     CONFIG.supabase.key = key;
 }

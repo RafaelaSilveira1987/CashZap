@@ -323,21 +323,24 @@ async function handleLogin(e) {
     
     // Verificar se o Supabase está configurado
     if (!isSupabaseConfigured()) {
-        // Permitir login sem verificação para configurar o Supabase
-        saveUser(userInput, userInput);
-        hideModal('loginModal');
-        initializeApp();
-        showNotification('Configure o Supabase nas configurações', 'info');
+        showNotification('Supabase não inicializado. Verifique as configurações.', 'error');
         return;
     }
     
     try {
-        // Tentar buscar usuário por ID
         let user = null;
         
-        if (!isNaN(userInput)) {
-            user = await getUserById(parseInt(userInput));
-        } else {
+        // Tentar buscar por ID (se for apenas números e pequeno)
+        if (!isNaN(userInput) && userInput.length < 5) {
+            try {
+                user = await getUserById(parseInt(userInput));
+            } catch (e) {
+                user = null;
+            }
+        }
+        
+        // Se não encontrou por ID, tentar por Celular (número completo)
+        if (!user) {
             user = await getUserByPhone(userInput);
         }
         

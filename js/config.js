@@ -1,7 +1,7 @@
 // Configurações do Dashboard
 const CONFIG = {
-    // Configurações do Supabase (serão carregadas do localStorage)
-    // Corrigido: Usando chaves genéricas para localStorage em vez de valores fixos
+    // Configurações do Supabase
+    // Prioridade: localStorage > Valores Padrão (fornecidos pelo usuário)
     supabase: {
         url: localStorage.getItem('supabaseUrl') || 'https://ktjpphfxulkymobkjvqo.supabase.co',
         key: localStorage.getItem('supabaseKey') || 'sb_secret_vt_34shHD2vjIdn4rso3lg_Xc-KgTdW'
@@ -30,6 +30,11 @@ function saveSupabaseConfig(url, key) {
     localStorage.setItem('supabaseKey', key);
     CONFIG.supabase.url = url;
     CONFIG.supabase.key = key;
+    
+    // Reinicializar o cliente Supabase após salvar novas configurações
+    if (typeof initSupabase === 'function') {
+        initSupabase();
+    }
 }
 
 // Salvar usuário

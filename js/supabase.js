@@ -1,32 +1,51 @@
-// Cliente Supabase
+// ========== CLIENTE SUPABASE ==========
+console.log('🗄️ [SUPABASE] Iniciando módulo Supabase...');
+
 let supabaseClient = null;
 
 // Inicializar cliente Supabase
 function initSupabase() {
+    console.log('🔌 [SUPABASE] Tentando inicializar cliente...');
+    
     if (!CONFIG.supabase.url || !CONFIG.supabase.key) {
-        console.warn('Supabase não configurado');
+        console.error('❌ [SUPABASE] Credenciais ausentes!');
+        console.error('   URL:', CONFIG.supabase.url ? '✓ Presente' : '✗ Vazia');
+        console.error('   Key:', CONFIG.supabase.key ? '✓ Presente' : '✗ Vazia');
         return false;
     }
     
     try {
+        console.log('📝 [SUPABASE] Criando cliente com:');
+        console.log('   URL:', CONFIG.supabase.url);
+        console.log('   Key (primeiros 20 chars):', CONFIG.supabase.key.substring(0, 20) + '...');
+        
         supabaseClient = supabase.createClient(CONFIG.supabase.url, CONFIG.supabase.key);
+        
+        console.log('✅ [SUPABASE] Cliente criado com sucesso!');
+        console.log('   supabaseClient:', supabaseClient ? 'Inicializado' : 'Falha');
+        
         return true;
     } catch (error) {
-        console.error('Erro ao inicializar Supabase:', error);
+        console.error('❌ [SUPABASE] Erro ao inicializar:', error);
         return false;
     }
 }
 
 // Verificar se o Supabase está configurado
 function isSupabaseConfigured() {
-    return supabaseClient !== null;
+    const configured = supabaseClient !== null;
+    console.log('🔍 [SUPABASE] Verificando configuração:', configured ? '✅ Configurado' : '❌ Não configurado');
+    return configured;
 }
 
 // ========== TRANSAÇÕES ==========
 
 // Buscar todas as transações do usuário
 async function getTransactions(userId, startDate = null, endDate = null) {
+    console.log('📊 [TRANSAÇÕES] Buscando transações do usuário:', userId);
+    
     if (!isSupabaseConfigured()) {
+        console.error('❌ [TRANSAÇÕES] Supabase não configurado');
         throw new Error('Supabase não configurado');
     }
     
@@ -38,26 +57,36 @@ async function getTransactions(userId, startDate = null, endDate = null) {
             .order('data', { ascending: false });
         
         if (startDate) {
+            console.log('   Filtro: data >= ', startDate);
             query = query.gte('data', startDate);
         }
         
         if (endDate) {
+            console.log('   Filtro: data <= ', endDate);
             query = query.lte('data', endDate);
         }
         
         const { data, error } = await query;
         
-        if (error) throw error;
+        if (error) {
+            console.error('❌ [TRANSAÇÕES] Erro na query:', error);
+            throw error;
+        }
+        
+        console.log('✅ [TRANSAÇÕES] Encontradas', data?.length || 0, 'transações');
         return data || [];
     } catch (error) {
-        console.error('Erro ao buscar transações:', error);
+        console.error('❌ [TRANSAÇÕES] Erro ao buscar:', error);
         throw error;
     }
 }
 
 // Buscar transações por tipo
 async function getTransactionsByType(userId, type, startDate = null, endDate = null) {
+    console.log('📊 [TRANSAÇÕES] Buscando transações do tipo:', type, 'para usuário:', userId);
+    
     if (!isSupabaseConfigured()) {
+        console.error('❌ [TRANSAÇÕES] Supabase não configurado');
         throw new Error('Supabase não configurado');
     }
     
@@ -79,17 +108,25 @@ async function getTransactionsByType(userId, type, startDate = null, endDate = n
         
         const { data, error } = await query;
         
-        if (error) throw error;
+        if (error) {
+            console.error('❌ [TRANSAÇÕES] Erro na query:', error);
+            throw error;
+        }
+        
+        console.log('✅ [TRANSAÇÕES] Encontradas', data?.length || 0, 'transações do tipo', type);
         return data || [];
     } catch (error) {
-        console.error('Erro ao buscar transações por tipo:', error);
+        console.error('❌ [TRANSAÇÕES] Erro ao buscar por tipo:', error);
         throw error;
     }
 }
 
 // Inserir nova transação
 async function insertTransaction(transaction) {
+    console.log('➕ [TRANSAÇÕES] Inserindo nova transação:', transaction);
+    
     if (!isSupabaseConfigured()) {
+        console.error('❌ [TRANSAÇÕES] Supabase não configurado');
         throw new Error('Supabase não configurado');
     }
     
@@ -99,17 +136,25 @@ async function insertTransaction(transaction) {
             .insert([transaction])
             .select();
         
-        if (error) throw error;
+        if (error) {
+            console.error('❌ [TRANSAÇÕES] Erro ao inserir:', error);
+            throw error;
+        }
+        
+        console.log('✅ [TRANSAÇÕES] Transação inserida com ID:', data[0]?.id);
         return data[0];
     } catch (error) {
-        console.error('Erro ao inserir transação:', error);
+        console.error('❌ [TRANSAÇÕES] Erro ao inserir transação:', error);
         throw error;
     }
 }
 
 // Atualizar transação
 async function updateTransaction(id, userId, updates) {
+    console.log('✏️ [TRANSAÇÕES] Atualizando transação:', id, 'do usuário:', userId);
+    
     if (!isSupabaseConfigured()) {
+        console.error('❌ [TRANSAÇÕES] Supabase não configurado');
         throw new Error('Supabase não configurado');
     }
     
@@ -121,17 +166,25 @@ async function updateTransaction(id, userId, updates) {
             .eq('usuario_id', userId)
             .select();
         
-        if (error) throw error;
+        if (error) {
+            console.error('❌ [TRANSAÇÕES] Erro ao atualizar:', error);
+            throw error;
+        }
+        
+        console.log('✅ [TRANSAÇÕES] Transação atualizada');
         return data[0];
     } catch (error) {
-        console.error('Erro ao atualizar transação:', error);
+        console.error('❌ [TRANSAÇÕES] Erro ao atualizar transação:', error);
         throw error;
     }
 }
 
 // Excluir transação
 async function deleteTransaction(id, userId) {
+    console.log('🗑️ [TRANSAÇÕES] Excluindo transação:', id, 'do usuário:', userId);
+    
     if (!isSupabaseConfigured()) {
+        console.error('❌ [TRANSAÇÕES] Supabase não configurado');
         throw new Error('Supabase não configurado');
     }
     
@@ -142,10 +195,15 @@ async function deleteTransaction(id, userId) {
             .eq('id', id)
             .eq('usuario_id', userId);
         
-        if (error) throw error;
+        if (error) {
+            console.error('❌ [TRANSAÇÕES] Erro ao excluir:', error);
+            throw error;
+        }
+        
+        console.log('✅ [TRANSAÇÕES] Transação excluída');
         return true;
     } catch (error) {
-        console.error('Erro ao excluir transação:', error);
+        console.error('❌ [TRANSAÇÕES] Erro ao excluir transação:', error);
         throw error;
     }
 }
@@ -154,7 +212,10 @@ async function deleteTransaction(id, userId) {
 
 // Buscar todas as categorias do usuário
 async function getCategories(userId) {
+    console.log('🏷️ [CATEGORIAS] Buscando categorias do usuário:', userId);
+    
     if (!isSupabaseConfigured()) {
+        console.error('❌ [CATEGORIAS] Supabase não configurado');
         throw new Error('Supabase não configurado');
     }
     
@@ -165,17 +226,25 @@ async function getCategories(userId) {
             .eq('usuario_id', userId)
             .order('descricao', { ascending: true });
         
-        if (error) throw error;
+        if (error) {
+            console.error('❌ [CATEGORIAS] Erro na query:', error);
+            throw error;
+        }
+        
+        console.log('✅ [CATEGORIAS] Encontradas', data?.length || 0, 'categorias');
         return data || [];
     } catch (error) {
-        console.error('Erro ao buscar categorias:', error);
+        console.error('❌ [CATEGORIAS] Erro ao buscar:', error);
         throw error;
     }
 }
 
 // Inserir nova categoria
 async function insertCategory(category) {
+    console.log('➕ [CATEGORIAS] Inserindo nova categoria:', category);
+    
     if (!isSupabaseConfigured()) {
+        console.error('❌ [CATEGORIAS] Supabase não configurado');
         throw new Error('Supabase não configurado');
     }
     
@@ -185,17 +254,25 @@ async function insertCategory(category) {
             .insert([category])
             .select();
         
-        if (error) throw error;
+        if (error) {
+            console.error('❌ [CATEGORIAS] Erro ao inserir:', error);
+            throw error;
+        }
+        
+        console.log('✅ [CATEGORIAS] Categoria inserida com ID:', data[0]?.id);
         return data[0];
     } catch (error) {
-        console.error('Erro ao inserir categoria:', error);
+        console.error('❌ [CATEGORIAS] Erro ao inserir categoria:', error);
         throw error;
     }
 }
 
 // Excluir categoria
 async function deleteCategory(id, userId) {
+    console.log('🗑️ [CATEGORIAS] Excluindo categoria:', id, 'do usuário:', userId);
+    
     if (!isSupabaseConfigured()) {
+        console.error('❌ [CATEGORIAS] Supabase não configurado');
         throw new Error('Supabase não configurado');
     }
     
@@ -206,10 +283,15 @@ async function deleteCategory(id, userId) {
             .eq('id', id)
             .eq('usuario_id', userId);
         
-        if (error) throw error;
+        if (error) {
+            console.error('❌ [CATEGORIAS] Erro ao excluir:', error);
+            throw error;
+        }
+        
+        console.log('✅ [CATEGORIAS] Categoria excluída');
         return true;
     } catch (error) {
-        console.error('Erro ao excluir categoria:', error);
+        console.error('❌ [CATEGORIAS] Erro ao excluir categoria:', error);
         throw error;
     }
 }
@@ -218,7 +300,10 @@ async function deleteCategory(id, userId) {
 
 // Buscar usuário por ID
 async function getUserById(userId) {
+    console.log('👤 [USUÁRIOS] Buscando usuário por ID:', userId);
+    
     if (!isSupabaseConfigured()) {
+        console.error('❌ [USUÁRIOS] Supabase não configurado');
         throw new Error('Supabase não configurado');
     }
     
@@ -229,38 +314,59 @@ async function getUserById(userId) {
             .eq('id', userId)
             .single();
         
-        if (error) throw error;
+        if (error) {
+            console.error('❌ [USUÁRIOS] Erro ao buscar por ID:', error);
+            throw error;
+        }
+        
+        console.log('✅ [USUÁRIOS] Usuário encontrado:', data?.nome || data?.email);
         return data;
     } catch (error) {
-        console.error('Erro ao buscar usuário:', error);
+        console.error('❌ [USUÁRIOS] Erro ao buscar usuário por ID:', error);
         throw error;
     }
 }
 
-// Buscar usuário por telefone
+// Buscar usuário por celular
 async function getUserByPhone(phone) {
+    console.log('👤 [USUÁRIOS] Buscando usuário por celular:', phone);
+    
     if (!isSupabaseConfigured()) {
+        console.error('❌ [USUÁRIOS] Supabase não configurado');
         throw new Error('Supabase não configurado');
     }
     
     try {
+        console.log('   Query: SELECT * FROM usuarios WHERE celular = ?', phone);
+        
         const { data, error } = await supabaseClient
             .from('usuarios')
             .select('*')
             .eq('celular', phone)
             .single();
         
-        if (error) throw error;
+        if (error) {
+            console.error('❌ [USUÁRIOS] Erro ao buscar por celular:', error);
+            console.error('   Detalhes do erro:', error.message);
+            throw error;
+        }
+        
+        console.log('✅ [USUÁRIOS] Usuário encontrado:', data?.nome || data?.email);
+        console.log('   ID:', data?.id);
+        console.log('   Status:', data?.status);
         return data;
     } catch (error) {
-        console.error('Erro ao buscar usuário por telefone:', error);
+        console.error('❌ [USUÁRIOS] Erro ao buscar usuário por telefone:', error);
         throw error;
     }
 }
 
 // Buscar todos os usuários (admin)
 async function getAllUsers() {
+    console.log('👥 [USUÁRIOS] Buscando todos os usuários');
+    
     if (!isSupabaseConfigured()) {
+        console.error('❌ [USUÁRIOS] Supabase não configurado');
         throw new Error('Supabase não configurado');
     }
     
@@ -270,17 +376,25 @@ async function getAllUsers() {
             .select('*')
             .order('created_at', { ascending: false });
         
-        if (error) throw error;
+        if (error) {
+            console.error('❌ [USUÁRIOS] Erro ao buscar todos:', error);
+            throw error;
+        }
+        
+        console.log('✅ [USUÁRIOS] Encontrados', data?.length || 0, 'usuários');
         return data || [];
     } catch (error) {
-        console.error('Erro ao buscar usuários:', error);
+        console.error('❌ [USUÁRIOS] Erro ao buscar usuários:', error);
         throw error;
     }
 }
 
 // Inserir novo usuário
 async function insertUser(user) {
+    console.log('➕ [USUÁRIOS] Inserindo novo usuário:', user);
+    
     if (!isSupabaseConfigured()) {
+        console.error('❌ [USUÁRIOS] Supabase não configurado');
         throw new Error('Supabase não configurado');
     }
     
@@ -290,17 +404,25 @@ async function insertUser(user) {
             .insert([user])
             .select();
         
-        if (error) throw error;
+        if (error) {
+            console.error('❌ [USUÁRIOS] Erro ao inserir:', error);
+            throw error;
+        }
+        
+        console.log('✅ [USUÁRIOS] Usuário inserido com ID:', data[0]?.id);
         return data[0];
     } catch (error) {
-        console.error('Erro ao inserir usuário:', error);
+        console.error('❌ [USUÁRIOS] Erro ao inserir usuário:', error);
         throw error;
     }
 }
 
 // Atualizar status do usuário
 async function updateUserStatus(userId, status) {
+    console.log('✏️ [USUÁRIOS] Atualizando status do usuário:', userId, 'para:', status);
+    
     if (!isSupabaseConfigured()) {
+        console.error('❌ [USUÁRIOS] Supabase não configurado');
         throw new Error('Supabase não configurado');
     }
     
@@ -311,10 +433,15 @@ async function updateUserStatus(userId, status) {
             .eq('id', userId)
             .select();
         
-        if (error) throw error;
+        if (error) {
+            console.error('❌ [USUÁRIOS] Erro ao atualizar:', error);
+            throw error;
+        }
+        
+        console.log('✅ [USUÁRIOS] Status atualizado');
         return data[0];
     } catch (error) {
-        console.error('Erro ao atualizar status do usuário:', error);
+        console.error('❌ [USUÁRIOS] Erro ao atualizar status:', error);
         throw error;
     }
 }
@@ -323,6 +450,8 @@ async function updateUserStatus(userId, status) {
 
 // Calcular totais de receitas e despesas
 async function calculateTotals(userId, startDate = null, endDate = null) {
+    console.log('💰 [STATS] Calculando totais do usuário:', userId);
+    
     try {
         const transactions = await getTransactions(userId, startDate, endDate);
         
@@ -336,15 +465,18 @@ async function calculateTotals(userId, startDate = null, endDate = null) {
         
         const saldo = receitas - despesas;
         
+        console.log('✅ [STATS] Totais calculados:', { receitas, despesas, saldo });
         return { receitas, despesas, saldo };
     } catch (error) {
-        console.error('Erro ao calcular totais:', error);
+        console.error('❌ [STATS] Erro ao calcular totais:', error);
         return { receitas: 0, despesas: 0, saldo: 0 };
     }
 }
 
 // Calcular despesas por categoria
 async function calculateExpensesByCategory(userId, startDate = null, endDate = null) {
+    console.log('📊 [STATS] Calculando despesas por categoria');
+    
     try {
         const transactions = await getTransactionsByType(userId, 'saida', startDate, endDate);
         
@@ -358,15 +490,18 @@ async function calculateExpensesByCategory(userId, startDate = null, endDate = n
             byCategory[categoryName] += parseFloat(t.valor || 0);
         });
         
+        console.log('✅ [STATS] Despesas por categoria:', byCategory);
         return byCategory;
     } catch (error) {
-        console.error('Erro ao calcular despesas por categoria:', error);
+        console.error('❌ [STATS] Erro ao calcular despesas por categoria:', error);
         return {};
     }
 }
 
 // Calcular tendências mensais (últimos 6 meses)
 async function calculateMonthlyTrends(userId) {
+    console.log('📈 [STATS] Calculando tendências mensais');
+    
     try {
         const today = new Date();
         const sixMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 5, 1);
@@ -396,9 +531,10 @@ async function calculateMonthlyTrends(userId) {
             }
         });
         
+        console.log('✅ [STATS] Tendências calculadas:', monthlyData);
         return monthlyData;
     } catch (error) {
-        console.error('Erro ao calcular tendências mensais:', error);
+        console.error('❌ [STATS] Erro ao calcular tendências mensais:', error);
         return {};
     }
 }
@@ -410,7 +546,6 @@ function calculateFinancialHealth(receitas, despesas) {
     const saldo = receitas - despesas;
     const percentualSaldo = (saldo / receitas) * 100;
     
-    // Score baseado no percentual de saldo
     let score = 0;
     
     if (percentualSaldo >= 30) {
@@ -445,5 +580,7 @@ function getHealthMessage(score) {
     }
 }
 
-// Inicializar Supabase ao carregar
+// ========== INICIALIZAÇÃO ==========
+console.log('🚀 [SUPABASE] Inicializando Supabase ao carregar o módulo...');
 initSupabase();
+console.log('✅ [SUPABASE] Módulo Supabase carregado!');

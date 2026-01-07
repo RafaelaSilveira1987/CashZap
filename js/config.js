@@ -1,7 +1,9 @@
-// Configurações do Dashboard
+// ========== CONFIGURAÇÕES DO DASHBOARD ==========
+console.log('🔧 [CONFIG] Iniciando carregamento de configurações...');
+
 const CONFIG = {
     // Configurações do Supabase
-    // Prioridade: localStorage > Valores Padrão (fornecidos pelo usuário)
+    // Prioridade: localStorage > Valores Padrão
     supabase: {
         url: localStorage.getItem('supabaseUrl') || 'https://ktjpphfxulkymobkjvqo.supabase.co',
         key: localStorage.getItem('supabaseKey') || 'sb_secret_vt_34shHD2vjIdn4rso3lg_Xc-KgTdW'
@@ -24,46 +26,78 @@ const CONFIG = {
     theme: localStorage.getItem('theme') || 'light'
 };
 
+// ========== LOGS DE DEPURAÇÃO ==========
+console.log('📋 [CONFIG] Configurações carregadas:');
+console.log('   URL Supabase:', CONFIG.supabase.url);
+console.log('   API Key (primeiros 20 chars):', CONFIG.supabase.key.substring(0, 20) + '...');
+console.log('   Usuário ID:', CONFIG.currentUser.id);
+console.log('   Usuário Nome:', CONFIG.currentUser.name);
+console.log('   Tema:', CONFIG.theme);
+
+// Verificar se as credenciais estão vazias
+if (!CONFIG.supabase.url || CONFIG.supabase.url === '') {
+    console.error('❌ [CONFIG] URL do Supabase está vazia!');
+}
+if (!CONFIG.supabase.key || CONFIG.supabase.key === '') {
+    console.error('❌ [CONFIG] API Key do Supabase está vazia!');
+}
+
+// ========== FUNÇÕES DE CONFIGURAÇÃO ==========
+
 // Salvar configurações do Supabase
 function saveSupabaseConfig(url, key) {
+    console.log('💾 [CONFIG] Salvando novas credenciais...');
+    console.log('   URL:', url);
+    console.log('   Key (primeiros 20 chars):', key.substring(0, 20) + '...');
+    
     localStorage.setItem('supabaseUrl', url);
     localStorage.setItem('supabaseKey', key);
     CONFIG.supabase.url = url;
     CONFIG.supabase.key = key;
     
+    console.log('✅ [CONFIG] Credenciais salvas no localStorage');
+    
     // Reinicializar o cliente Supabase após salvar novas configurações
     if (typeof initSupabase === 'function') {
+        console.log('🔄 [CONFIG] Reinicializando cliente Supabase...');
         initSupabase();
     }
 }
 
 // Salvar usuário
 function saveUser(userId, userName) {
+    console.log('👤 [CONFIG] Salvando usuário:', userId, userName);
     localStorage.setItem('userId', userId);
     localStorage.setItem('userName', userName || 'Usuário');
     CONFIG.currentUser.id = userId;
     CONFIG.currentUser.name = userName || 'Usuário';
+    console.log('✅ [CONFIG] Usuário salvo');
 }
 
 // Limpar usuário (logout)
 function clearUser() {
+    console.log('🚪 [CONFIG] Fazendo logout...');
     localStorage.removeItem('userId');
     localStorage.removeItem('userName');
     CONFIG.currentUser.id = null;
     CONFIG.currentUser.name = 'Usuário';
+    console.log('✅ [CONFIG] Usuário removido');
 }
 
 // Salvar tema
 function saveTheme(theme) {
+    console.log('🎨 [CONFIG] Alterando tema para:', theme);
     localStorage.setItem('theme', theme);
     CONFIG.theme = theme;
     document.documentElement.setAttribute('data-theme', theme);
+    console.log('✅ [CONFIG] Tema alterado');
 }
 
 // Aplicar tema inicial
 document.documentElement.setAttribute('data-theme', CONFIG.theme);
 
-// Funções auxiliares
+// ========== FUNÇÕES AUXILIARES ==========
+
 function formatCurrency(value) {
     return new Intl.NumberFormat('pt-BR', {
         style: 'currency',
@@ -129,6 +163,8 @@ function getPeriodDates(periodType) {
 }
 
 function showNotification(message, type = 'success') {
+    console.log(`📢 [NOTIFICAÇÃO] [${type.toUpperCase()}] ${message}`);
+    
     // Criar elemento de notificação
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
@@ -181,3 +217,5 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+console.log('✅ [CONFIG] Configurações carregadas com sucesso!');

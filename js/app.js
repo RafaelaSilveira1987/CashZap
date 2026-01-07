@@ -362,10 +362,18 @@ function showLoginModal() {
 // ========== FORMULÁRIOS ==========
 
 function setupForms() {
+    console.log('📋 [FORMS] Configurando formulários...');
+    
     // Formulário de login
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
-        loginForm.addEventListener('submit', handleLogin);
+        console.log('   Adicionando evento submit ao formulário de login');
+        loginForm.addEventListener('submit', function(e) {
+            console.log('🔐 [FORMS] Evento submit disparado');
+            handleLogin(e);
+        });
+    } else {
+        console.warn('   ⚠️ Formulário de login não encontrado');
     }
     
     // Formulário de transação
@@ -380,6 +388,58 @@ function setupForms() {
         categoryForm.addEventListener('submit', handleCategorySubmit);
     }
 }
+
+
+async function forceLogin(phoneNumber) {
+    console.log("\n" + "=".repeat(60));
+    console.log("Forcando login via console");
+    console.log("=".repeat(60));
+    console.log("Numero:", phoneNumber);
+    
+    if (!phoneNumber) {
+        console.error("Numero nao fornecido");
+        return;
+    }
+    
+    if (!isSupabaseConfigured()) {
+        console.error("Supabase nao configurado");
+        return;
+    }
+    
+    try {
+        console.log("Buscando usuario...");
+        const user = await getUserByPhone(phoneNumber);
+        
+        if (!user) {
+            console.error("Usuario nao encontrado");
+            return;
+        }
+        
+        console.log("Usuario encontrado:", user);
+        
+        if (user.status !== "ativo") {
+            console.error("Usuario nao ativo:", user.status);
+            return;
+        }
+        
+        console.log("Salvando usuario...");
+        saveUser(user.id, user.nome || user.celular);
+        
+        console.log("Ocultando modal...");
+        hideModal("loginModal");
+        
+        console.log("Inicializando aplicacao...");
+        initializeUI();
+        loadDashboardData();
+        
+        showNotification("Login realizado!", "success");
+        console.log("Login concluido!");
+    } catch (error) {
+        console.error("Erro:", error);
+    }
+}
+
+window.forceLogin = forceLogin;
 
 async function handleLogin(e) {
     e.preventDefault();

@@ -383,50 +383,93 @@ function setupForms() {
 
 async function handleLogin(e) {
     e.preventDefault();
+    console.log('🔐 [LOGIN] Iniciando processo de login...');
     
     const userInput = document.getElementById('loginUser').value.trim();
+    console.log('   Entrada do usuário:', userInput);
     
     if (!userInput) {
+        console.error('❌ [LOGIN] Entrada vazia');
         showNotification('Digite um ID ou telefone', 'error');
         return;
     }
     
     // Verificar se o Supabase está configurado
     if (!isSupabaseConfigured()) {
+        console.error('❌ [LOGIN] Supabase não configurado');
         showNotification('Supabase não inicializado. Verifique as configurações.', 'error');
         return;
     }
     
     try {
         let user = null;
+        console.log('🔍 [LOGIN] Procurando usuário...');
         
         // Tentar buscar por ID (se for apenas números e pequeno)
         if (!isNaN(userInput) && userInput.length < 5) {
+            console.log('   Tentando buscar por ID:', userInput);
             try {
                 user = await getUserById(parseInt(userInput));
+                if (user) {
+                    console.log('✅ [LOGIN] Usuário encontrado por ID:', user);
+                }
             } catch (e) {
+                console.log('   ID não encontrado, tentando celular...');
                 user = null;
             }
         }
         
         // Se não encontrou por ID, tentar por Celular (número completo)
         if (!user) {
-            user = await getUserByPhone(userInput);
+            console.log('   Tentando buscar por celular:', userInput);
+            try {
+                user = await getUserByPhone(userInput);
+                if (user) {
+                    console.log('✅ [LOGIN] Usuário encontrado por celular:', user);
+                } else {
+                    console.error('❌ [LOGIN] Usuário não encontrado por celular');
+                }
+            } catch (error) {
+                console.error('❌ [LOGIN] Erro ao buscar por celular:', error.message);
+                throw error;
+            }
         }
         
-        if (user && user.status === 'ativo') {
-            saveUser(user.id, user.nome || user.telefone);
-            hideModal('loginModal');
-            initializeApp();
-            showNotification('Login realizado com sucesso!', 'success');
-        } else if (user && user.status !== 'ativo') {
-            showNotification('Usuário inativo. Entre em contato com o administrador.', 'error');
+        // Validar status do usuário
+        if (user) {
+            console.log('📋 [LOGIN] Verificando status do usuário:', user.status);
+            
+            if (user.status === 'ativo') {
+                console.log('✅ [LOGIN] Usuário ativo, realizando login...');
+                saveUser(user.id, user.nome || user.celular);
+                console.log('💾 [LOGIN] Usuário salvo no localStorage');
+                
+                hideModal('loginModal');
+                console.log('🚀 [LOGIN] Inicializando aplicação...');
+                initializeApp();
+                showNotification('Login realizado com sucesso!', 'success');
+                console.log('✅ [LOGIN] Login concluído com sucesso!');
+            } else if (user.status === 'inativo') {
+                console.warn('⚠️ [LOGIN] Usuário inativo');
+                showNotification('Usuário inativo. Entre em contato com o administrador.', 'error');
+            } else if (user.status === 'bloqueado') {
+                console.warn('⚠️ [LOGIN] Usuário bloqueado');
+                showNotification('Usuário bloqueado. Entre em contato com o administrador.', 'error');
+            } else if (user.status === 'excluido') {
+                console.warn('⚠️ [LOGIN] Usuário excluído');
+                showNotification('Usuário excluído do sistema.', 'error');
+            } else {
+                console.warn('⚠️ [LOGIN] Status desconhecido:', user.status);
+                showNotification('Status do usuário desconhecido.', 'error');
+            }
         } else {
+            console.error('❌ [LOGIN] Usuário não encontrado');
             showNotification('Usuário não encontrado', 'error');
         }
     } catch (error) {
-        console.error('Erro no login:', error);
-        showNotification('Erro ao fazer login', 'error');
+        console.error('❌ [LOGIN] Erro durante o login:', error);
+        console.error('   Detalhes:', error.message);
+        showNotification('Erro ao fazer login: ' + error.message, 'error');
     }
 }
 

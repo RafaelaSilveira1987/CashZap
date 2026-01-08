@@ -1,29 +1,146 @@
-console.log('🚀 [APP] Inicializando aplicacao...');
-
 // ========== INICIALIZAÇÃO ==========
 
+document.addEventListener('DOMContentLoaded', function() {
+    initializeApp();
+});
+
 function initializeApp() {
-    console.log('🔧 [APP] Inicializando aplicação...');
+    console.log('🚀 [APP] Inicializando aplicacao...');
     
-    if (!isSupabaseConfigured()) {
-        console.error('❌ [APP] Supabase não configurado');
+    // Configurar botoes de login e configuracao
+    setupLoginButtons();
+    
+    // Verificar se o usuario esta logado
+    if (!CONFIG.currentUser.id) {
+        console.log('👤 [APP] Usuario nao logado, mostrando tela de login');
+        showLoginModal();
         return;
     }
     
-    // Verificar se usuário está logado
-    if (CONFIG.currentUser.id) {
-        console.log('✅ [APP] Usuário logado:', CONFIG.currentUser.name);
-        showDashboard();
-    } else {
-        console.log('👤 [APP] Usuario nao logado, mostrando tela de login');
-        showLoginModal();
+    // Verificar se o Supabase está configurado
+    if (!isSupabaseConfigured()) {
+        showNotification('Configure o Supabase nas configurações', 'error');
     }
     
-    // Configurar event listeners
+    // Inicializar interface
+    initializeUI();
+    
+    // Carregar dados iniciais
+    loadDashboardData();
+}
+
+function initializeUI() {
+    // Configurar nome do usuário
+    document.getElementById('userName').textContent = CONFIG.currentUser.name;
+    
+    // Configurar navegação
+    setupNavigation();
+    
+    // Configurar sidebar
     setupSidebar();
+    
+    // Configurar tema
     setupTheme();
+    
+    // Configurar filtros de período
     setupPeriodFilters();
+    
+    // Configurar modais
+    setupModals();
+    
+    // Configurar formulários
     setupForms();
+    
+    // Configurar botões
+    setupButtons();
+}
+
+// ========== NAVEGAÇÃO ==========
+
+function setupNavigation() {
+    const navItems = document.querySelectorAll('.nav-item');
+    
+    navItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const page = this.getAttribute('data-page');
+            navigateToPage(page);
+        });
+    });
+}
+
+function navigateToPage(pageName) {
+    // Atualizar menu ativo
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+        if (item.getAttribute('data-page') === pageName) {
+            item.classList.add('active');
+        }
+    });
+    
+    // Atualizar página ativa
+    document.querySelectorAll('.page').forEach(page => {
+        page.classList.remove('active');
+    });
+    
+    const activePage = document.getElementById(`${pageName}-page`);
+    if (activePage) {
+        activePage.classList.add('active');
+    }
+    
+    // Atualizar título
+    const titles = {
+        'dashboard': 'Dashboard',
+        'receitas': 'Receitas',
+        'despesas': 'Despesas',
+        'transacoes': 'Transações',
+        'categorias': 'Categorias',
+        'relatorios': 'Relatórios',
+        'usuarios': 'Usuários',
+        'configuracoes': 'Configurações'
+    };
+    
+    document.getElementById('pageTitle').textContent = titles[pageName] || 'Dashboard';
+    
+    // Carregar dados da página
+    loadPageData(pageName);
+}
+
+async function loadPageData(pageName) {
+    if (!isSupabaseConfigured() || !CONFIG.currentUser.id) return;
+    
+    try {
+        switch(pageName) {
+            case 'dashboard':
+                await loadDashboardData();
+                break;
+            case 'receitas':
+                await loadReceitasData();
+                break;
+            case 'despesas':
+                await loadDespesasData();
+                break;
+            case 'transacoes':
+                await loadTransacoesData();
+                break;
+            case 'categorias':
+                await loadCategoriasData();
+                break;
+            case 'relatorios':
+                await loadRelatoriosData();
+                break;
+            case 'usuarios':
+                await loadUsuariosData();
+                break;
+            case 'configuracoes':
+                await loadConfiguracoesData();
+                break;
+        }
+    } catch (error) {
+        console.error('Erro ao carregar dados da página:', error);
+        showNotification('Erro ao carregar dados', 'error');
+    }
 }
 
 // ========== SIDEBAR ==========
@@ -70,6 +187,7 @@ function setupTheme() {
     
     if (themeToggle) {
         console.log('   Botao de tema encontrado');
+        // Atualizar ícone e texto do botão
         updateThemeButton();
         
         themeToggle.addEventListener('click', function(e) {
@@ -147,254 +265,533 @@ function setupPeriodFilters() {
     }
 }
 
-// ========== NAVEGAÇÃO ==========
+// ========== MODAIS ==========
 
-function showPage(pageName) {
-    console.log('📄 [NAV] Navegando para:', pageName);
+function setupModals() {
+    // Modal de transação
+    const transactionModal = document.getElementById('transactionModal');
+    const closeModal = document.getElementById('closeModal');
+    const cancelBtn = document.getElementById('cancelBtn');
     
-    // Ocultar todas as páginas
-    document.querySelectorAll('.page').forEach(page => {
-        page.style.display = 'none';
+    if (closeModal) {
+        closeModal.addEventListener('click', () => hideModal('transactionModal'));
+    }
+    
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => hideModal('transactionModal'));
+    }
+    
+    // Modal de categoria
+    const categoryModal = document.getElementById('categoryModal');
+    const closeCategoryModal = document.getElementById('closeCategoryModal');
+    const cancelCategoryBtn = document.getElementById('cancelCategoryBtn');
+    
+    if (closeCategoryModal) {
+        closeCategoryModal.addEventListener('click', () => hideModal('categoryModal'));
+    }
+    
+    if (cancelCategoryBtn) {
+        cancelCategoryBtn.addEventListener('click', () => hideModal('categoryModal'));
+    }
+    
+    // Fechar modal ao clicar fora
+    window.addEventListener('click', function(e) {
+        if (e.target.classList.contains('modal')) {
+            e.target.classList.remove('active');
+        }
     });
-    
-    // Mostrar página selecionada
-    const page = document.getElementById(pageName + 'Page');
-    if (page) {
-        page.style.display = 'block';
-    }
-    
-    // Atualizar nav items
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.remove('active');
-    });
-    event.target.closest('.nav-item')?.classList.add('active');
-    
-    // Atualizar título
-    const titles = {
-        'dashboard': 'Dashboard',
-        'receitas': 'Receitas',
-        'despesas': 'Despesas',
-        'transacoes': 'Transações',
-        'categorias': 'Categorias',
-        'relatorios': 'Relatórios',
-        'usuarios': 'Usuários',
-        'configuracoes': 'Configurações'
-    };
-    
-    document.getElementById('pageTitle').textContent = titles[pageName] || 'Dashboard';
-    
-    // Carregar dados da página
-    loadPageData(pageName);
 }
 
-async function loadPageData(pageName) {
-    if (!isSupabaseConfigured() || !CONFIG.currentUser.id) return;
-    
-    try {
-        switch(pageName) {
-            case 'dashboard':
-                await loadDashboardData();
-                break;
-            case 'receitas':
-                await loadReceitasData();
-                break;
-            case 'despesas':
-                await loadDespesasData();
-                break;
-            case 'transacoes':
-                await loadTransacoesData();
-                break;
-            case 'usuarios':
-                await loadUsuariosData();
-                break;
-        }
-    } catch (error) {
-        console.error('Erro ao carregar dados da página:', error);
-        showNotification('Erro ao carregar dados', 'error');
+function showModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.add('active');
     }
 }
 
-// ========== LOGIN E CADASTRO ==========
-
-function showLoginModal() {
-    document.getElementById('loginModal').style.display = 'flex';
-    document.getElementById('dashboardContainer').style.display = 'none';
-}
-
-function showDashboard() {
-    document.getElementById('loginModal').style.display = 'none';
-    document.getElementById('dashboardContainer').style.display = 'flex';
-    initializeUI();
-    loadDashboardData();
-}
-
-function redirectToWhatsAppSignup() {
-    console.log('📱 [SIGNUP] Redirecionando para WhatsApp...');
-    const whatsappNumber = '553298416669';
-    const message = 'Olá, gostaria de me cadastrar no GranaZap';
-    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
-}
-
-async function handleLogin() {
-    console.log('🔐 [LOGIN] Iniciando login...');
-    
-    const userInput = document.getElementById('loginUser').value.trim();
-    const password = document.getElementById('loginPassword').value;
-    const errorDiv = document.getElementById('loginError');
-    
-    errorDiv.style.display = 'none';
-    
-    if (!userInput || !password) {
-        showLoginError('Preencha todos os campos');
-        return;
-    }
-    
-    if (!isSupabaseConfigured()) {
-        showLoginError('Supabase não configurado');
-        return;
-    }
-    
-    try {
-        console.log('🔍 [LOGIN] Buscando usuário...');
-        
-        // Buscar usuário por celular ou email
-        let query = supabaseClient
-            .from('usuarios')
-            .select('*');
-        
-        // Verificar se é celular ou email
-        if (userInput.includes('@')) {
-            query = query.eq('email', userInput);
-        } else {
-            // Remover caracteres especiais do celular
-            const celularLimpo = userInput.replace(/\D/g, '');
-            query = query.eq('celular', celularLimpo);
-        }
-        
-        const { data: users, error } = await query;
-        
-        if (error) {
-            console.error('❌ [LOGIN] Erro ao buscar usuário:', error);
-            showLoginError('Erro ao buscar usuário');
-            return;
-        }
-        
-        if (!users || users.length === 0) {
-            console.error('❌ [LOGIN] Usuário não encontrado');
-            showLoginError('Usuário não encontrado. Cadastre-se via WhatsApp primeiro!');
-            return;
-        }
-        
-        const user = users[0];
-        console.log('✅ [LOGIN] Usuário encontrado:', user.nome);
-        
-        // Verificar se usuário tem senha definida
-        if (!user.senha) {
-            console.log('🔐 [LOGIN] Primeira vez - mostrar tela de criação de senha');
-            showSetPasswordForm(user);
-            return;
-        }
-        
-        // Validar senha (em produção, usar hash bcrypt)
-        if (user.senha !== password) {
-            console.error('❌ [LOGIN] Senha incorreta');
-            showLoginError('Senha incorreta');
-            return;
-        }
-        
-        // Login bem-sucedido
-        console.log('✅ [LOGIN] Login bem-sucedido');
-        saveUser(user.id, user.nome, user.celular);
-        showNotification('Login realizado com sucesso!', 'success');
-        showDashboard();
-        
-    } catch (error) {
-        console.error('❌ [LOGIN] Erro:', error);
-        showLoginError('Erro ao fazer login: ' + error.message);
+function hideModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('active');
     }
 }
 
-function showSetPasswordForm(user) {
-    console.log('🔐 [PASSWORD] Mostrando formulário de criação de senha');
-    document.getElementById('loginForm').style.display = 'none';
-    document.getElementById('setPasswordForm').style.display = 'block';
-    document.getElementById('setPasswordForm').dataset.userId = user.id;
-    document.getElementById('setPasswordForm').dataset.userName = user.nome;
-    document.getElementById('setPasswordForm').dataset.userCelular = user.celular;
+function setupLoginButtons() {
+    console.log('🔘 [APP] Configurando botoes de login...');
+    
+    const configBeforeLoginBtn = document.getElementById('configBeforeLoginBtn');
+    if (configBeforeLoginBtn) {
+        configBeforeLoginBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('⚙️ [APP] Abrindo modal de configuracao antes do login');
+            hideModal('loginModal');
+            showModal('configBeforeLoginModal');
+        });
+    }
+    
+    const closeConfigBeforeLoginModal = document.getElementById('closeConfigBeforeLoginModal');
+    if (closeConfigBeforeLoginModal) {
+        closeConfigBeforeLoginModal.addEventListener('click', function() {
+            console.log('❌ [APP] Fechando modal de configuracao');
+            hideModal('configBeforeLoginModal');
+            showModal('loginModal');
+        });
+    }
+    
+    const cancelConfigBeforeLoginBtn = document.getElementById('cancelConfigBeforeLoginBtn');
+    if (cancelConfigBeforeLoginBtn) {
+        cancelConfigBeforeLoginBtn.addEventListener('click', function() {
+            console.log('❌ [APP] Cancelando configuracao');
+            hideModal('configBeforeLoginModal');
+            showModal('loginModal');
+        });
+    }
+    
+    const configBeforeLoginForm = document.getElementById('configBeforeLoginForm');
+    if (configBeforeLoginForm) {
+        configBeforeLoginForm.addEventListener('submit', handleConfigBeforeLogin);
+    }
 }
 
-async function handleSetPassword() {
-    console.log('🔐 [PASSWORD] Criando senha...');
+async function handleConfigBeforeLogin(e) {
+    e.preventDefault();
+    console.log('💾 [APP] Salvando configuracoes antes do login...');
     
-    const form = document.getElementById('setPasswordForm');
-    const userId = form.dataset.userId;
-    const userName = form.dataset.userName;
-    const userCelular = form.dataset.userCelular;
-    const newPassword = document.getElementById('newPassword').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
+    const url = document.getElementById('configBeforeLoginUrl').value.trim();
+    const key = document.getElementById('configBeforeLoginKey').value.trim();
     
-    if (!newPassword || !confirmPassword) {
+    if (!url || !key) {
         showNotification('Preencha todos os campos', 'error');
         return;
     }
     
-    if (newPassword.length < 8) {
-        showNotification('A senha deve ter no mínimo 8 caracteres', 'error');
+    try {
+        saveSupabaseConfig(url, key);
+        showNotification('Configuracoes salvas com sucesso!', 'success');
+        console.log('✅ [APP] Configuracoes salvas, voltando ao login');
+        
+        setTimeout(() => {
+            hideModal('configBeforeLoginModal');
+            showModal('loginModal');
+        }, 1000);
+    } catch (error) {
+        console.error('❌ [APP] Erro ao salvar configuracoes:', error);
+        showNotification('Erro ao salvar configuracoes', 'error');
+    }
+}
+
+function showLoginModal() {
+    showModal('loginModal');
+}
+
+// ========== FORMULÁRIOS ==========
+
+function setupForms() {
+    console.log('📋 [FORMS] Configurando formulários...');
+    
+    // Formulário de login
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        console.log('   Adicionando evento submit ao formulário de login');
+        loginForm.addEventListener('submit', function(e) {
+            console.log('🔐 [FORMS] Evento submit disparado');
+            handleLogin(e);
+        });
+    } else {
+        console.warn('   ⚠️ Formulário de login não encontrado');
+    }
+    
+    // Formulário de transação
+    const transactionForm = document.getElementById('transactionForm');
+    if (transactionForm) {
+        transactionForm.addEventListener('submit', handleTransactionSubmit);
+    }
+    
+    // Formulário de categoria
+    const categoryForm = document.getElementById('categoryForm');
+    if (categoryForm) {
+        categoryForm.addEventListener('submit', handleCategorySubmit);
+    }
+}
+
+
+async function forceLogin(phoneNumber) {
+    console.log("\n" + "=".repeat(60));
+    console.log("Forcando login via console");
+    console.log("=".repeat(60));
+    console.log("Numero:", phoneNumber);
+    
+    if (!phoneNumber) {
+        console.error("Numero nao fornecido");
         return;
     }
     
-    if (newPassword !== confirmPassword) {
-        showNotification('As senhas não correspondem', 'error');
+    if (!isSupabaseConfigured()) {
+        console.error("Supabase nao configurado");
         return;
     }
     
     try {
-        console.log('💾 [PASSWORD] Salvando senha no Supabase...');
+        console.log("Buscando usuario...");
+        const user = await getUserByPhone(phoneNumber);
         
-        const { error } = await supabaseClient
-            .from('usuarios')
-            .update({ senha: newPassword })
-            .eq('id', userId);
-        
-        if (error) {
-            console.error('❌ [PASSWORD] Erro ao salvar:', error);
-            showNotification('Erro ao salvar senha', 'error');
+        if (!user) {
+            console.error("Usuario nao encontrado");
             return;
         }
         
-        console.log('✅ [PASSWORD] Senha criada com sucesso');
-        saveUser(userId, userName, userCelular);
-        showNotification('Senha criada com sucesso!', 'success');
+        console.log("Usuario encontrado:", user);
         
-        // Mostrar dashboard
-        setTimeout(() => {
-            document.getElementById('loginForm').style.display = 'block';
-            document.getElementById('setPasswordForm').style.display = 'none';
-            showDashboard();
-        }, 1500);
+        if (user.status !== "ativo") {
+            console.error("Usuario nao ativo:", user.status);
+            return;
+        }
         
+        console.log("Salvando usuario...");
+        saveUser(user.id, user.nome || user.celular);
+        
+        console.log("Ocultando modal...");
+        hideModal("loginModal");
+        
+        console.log("Inicializando aplicacao...");
+        initializeUI();
+        loadDashboardData();
+        
+        showNotification("Login realizado!", "success");
+        console.log("Login concluido!");
     } catch (error) {
-        console.error('❌ [PASSWORD] Erro:', error);
-        showNotification('Erro ao criar senha: ' + error.message, 'error');
+        console.error("Erro:", error);
     }
 }
 
-function showLoginError(message) {
-    const errorDiv = document.getElementById('loginError');
-    errorDiv.textContent = message;
-    errorDiv.style.display = 'block';
-    showNotification(message, 'error');
+window.forceLogin = forceLogin;
+
+async function handleLogin(e) {
+    e.preventDefault();
+    console.log('🔐 [LOGIN] Iniciando processo de login...');
+    
+    const userInput = document.getElementById('loginUser').value.trim();
+    console.log('   Entrada do usuário:', userInput);
+    
+    if (!userInput) {
+        console.error('❌ [LOGIN] Entrada vazia');
+        showNotification('Digite um ID ou telefone', 'error');
+        return;
+    }
+    
+    // Verificar se o Supabase está configurado
+    if (!isSupabaseConfigured()) {
+        console.error('❌ [LOGIN] Supabase não configurado');
+        showNotification('Supabase não inicializado. Verifique as configurações.', 'error');
+        return;
+    }
+    
+    try {
+        let user = null;
+        console.log('🔍 [LOGIN] Procurando usuário...');
+        
+        // Tentar buscar por ID (se for apenas números e pequeno)
+        if (!isNaN(userInput) && userInput.length < 5) {
+            console.log('   Tentando buscar por ID:', userInput);
+            try {
+                user = await getUserById(parseInt(userInput));
+                if (user) {
+                    console.log('✅ [LOGIN] Usuário encontrado por ID:', user);
+                }
+            } catch (e) {
+                console.log('   ID não encontrado, tentando celular...');
+                user = null;
+            }
+        }
+        
+        // Se não encontrou por ID, tentar por Celular (número completo)
+        if (!user) {
+            console.log('   Tentando buscar por celular:', userInput);
+            try {
+                user = await getUserByPhone(userInput);
+                if (user) {
+                    console.log('✅ [LOGIN] Usuário encontrado por celular:', user);
+                } else {
+                    console.error('❌ [LOGIN] Usuário não encontrado por celular');
+                }
+            } catch (error) {
+                console.error('❌ [LOGIN] Erro ao buscar por celular:', error.message);
+                throw error;
+            }
+        }
+        
+        // Validar status do usuário
+        if (user) {
+            console.log('📋 [LOGIN] Verificando status do usuário:', user.status);
+            
+            if (user.status === 'ativo') {
+                console.log('✅ [LOGIN] Usuário ativo, realizando login...');
+                saveUser(user.id, user.nome || user.celular);
+                console.log('💾 [LOGIN] Usuário salvo no localStorage');
+                
+                hideModal('loginModal');
+                console.log('🚀 [LOGIN] Inicializando aplicação...');
+                initializeApp();
+                showNotification('Login realizado com sucesso!', 'success');
+                console.log('✅ [LOGIN] Login concluído com sucesso!');
+            } else if (user.status === 'inativo') {
+                console.warn('⚠️ [LOGIN] Usuário inativo');
+                showNotification('Usuário inativo. Entre em contato com o administrador.', 'error');
+            } else if (user.status === 'bloqueado') {
+                console.warn('⚠️ [LOGIN] Usuário bloqueado');
+                showNotification('Usuário bloqueado. Entre em contato com o administrador.', 'error');
+            } else if (user.status === 'excluido') {
+                console.warn('⚠️ [LOGIN] Usuário excluído');
+                showNotification('Usuário excluído do sistema.', 'error');
+            } else {
+                console.warn('⚠️ [LOGIN] Status desconhecido:', user.status);
+                showNotification('Status do usuário desconhecido.', 'error');
+            }
+        } else {
+            console.error('❌ [LOGIN] Usuário não encontrado');
+            showNotification('Usuário não encontrado', 'error');
+        }
+    } catch (error) {
+        console.error('❌ [LOGIN] Erro durante o login:', error);
+        console.error('   Detalhes:', error.message);
+        showNotification('Erro ao fazer login: ' + error.message, 'error');
+    }
+}
+
+async function handleTransactionSubmit(e) {
+    e.preventDefault();
+    
+    if (!isSupabaseConfigured() || !CONFIG.currentUser.id) {
+        showNotification('Configure o Supabase e faça login', 'error');
+        return;
+    }
+    
+    const id = document.getElementById('transactionId').value;
+    const descricao = document.getElementById('descricao').value.trim();
+    const valor = parseFloat(document.getElementById('valor').value);
+    const data = document.getElementById('data').value;
+    const tipo = document.getElementById('tipo').value;
+    const categoria_id = parseInt(document.getElementById('categoria').value);
+    const pagador = document.getElementById('pagador').value.trim();
+    
+    if (!descricao || !valor || !data || !tipo || !categoria_id) {
+        showNotification('Preencha todos os campos obrigatórios', 'error');
+        return;
+    }
+    
+    const dataObj = new Date(data);
+    const mes = dataObj.getMonth() + 1;
+    
+    const transaction = {
+        descricao,
+        valor,
+        data,
+        mes,
+        tipo,
+        categoria_id,
+        pagador,
+        usuario_id: CONFIG.currentUser.id
+    };
+    
+    try {
+        if (id) {
+            // Atualizar transação existente
+            await updateTransaction(parseInt(id), CONFIG.currentUser.id, transaction);
+            showNotification('Transação atualizada com sucesso!', 'success');
+        } else {
+            // Inserir nova transação
+            await insertTransaction(transaction);
+            showNotification('Transação criada com sucesso!', 'success');
+        }
+        
+        hideModal('transactionModal');
+        document.getElementById('transactionForm').reset();
+        
+        // Recarregar dados
+        const currentPage = document.querySelector('.nav-item.active').getAttribute('data-page');
+        loadPageData(currentPage);
+    } catch (error) {
+        console.error('Erro ao salvar transação:', error);
+        showNotification('Erro ao salvar transação', 'error');
+    }
+}
+
+async function handleCategorySubmit(e) {
+    e.preventDefault();
+    
+    if (!isSupabaseConfigured() || !CONFIG.currentUser.id) {
+        showNotification('Configure o Supabase e faça login', 'error');
+        return;
+    }
+    
+    const descricao = document.getElementById('categoryName').value.trim();
+    
+    if (!descricao) {
+        showNotification('Digite o nome da categoria', 'error');
+        return;
+    }
+    
+    const category = {
+        descricao,
+        usuario_id: CONFIG.currentUser.id
+    };
+    
+    try {
+        await insertCategory(category);
+        showNotification('Categoria criada com sucesso!', 'success');
+        
+        hideModal('categoryModal');
+        document.getElementById('categoryForm').reset();
+        
+        // Recarregar categorias
+        await loadCategoriasData();
+        await loadCategoriesIntoSelect();
+    } catch (error) {
+        console.error('Erro ao salvar categoria:', error);
+        showNotification('Erro ao salvar categoria', 'error');
+    }
+}
+
+// ========== BOTÕES ==========
+
+function setupButtons() {
+    // Botão de logout
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', handleLogout);
+    }
+    
+    // Botões de adicionar transação
+    const addTransactionBtns = [
+        document.getElementById('addTransactionBtn'),
+        document.getElementById('addReceitaBtn'),
+        document.getElementById('addDespesaBtn')
+    ];
+    
+    addTransactionBtns.forEach(btn => {
+        if (btn) {
+            btn.addEventListener('click', function() {
+                openTransactionModal();
+            });
+        }
+    });
+    
+    // Botão de adicionar categoria
+    const addCategoriaBtn = document.getElementById('addCategoriaBtn');
+    if (addCategoriaBtn) {
+        addCategoriaBtn.addEventListener('click', function() {
+            openCategoryModal();
+        });
+    }
+    
+    // Botão de salvar configurações do Supabase
+    const saveSupabaseConfigBtn = document.getElementById('saveSupabaseConfig');
+    if (saveSupabaseConfigBtn) {
+        saveSupabaseConfigBtn.addEventListener('click', handleSaveSupabaseConfig);
+    }
+    
+    // Botão de exportar relatório
+    const exportReportBtn = document.getElementById('exportReportBtn');
+    if (exportReportBtn) {
+        exportReportBtn.addEventListener('click', handleExportReport);
+    }
 }
 
 function handleLogout() {
-    console.log('🚪 [LOGOUT] Fazendo logout...');
     clearUser();
-    document.getElementById('loginForm').style.display = 'block';
-    document.getElementById('setPasswordForm').style.display = 'none';
-    document.getElementById('loginUser').value = '';
-    document.getElementById('loginPassword').value = '';
-    showLoginModal();
+    location.reload();
+}
+
+function openTransactionModal(transaction = null) {
+    const modal = document.getElementById('transactionModal');
+    const form = document.getElementById('transactionForm');
+    const title = document.getElementById('modalTitle');
+    
+    // Resetar formulário
+    form.reset();
+    
+    if (transaction) {
+        // Editar transação existente
+        title.textContent = 'Editar Transação';
+        document.getElementById('transactionId').value = transaction.id;
+        document.getElementById('descricao').value = transaction.descricao;
+        document.getElementById('valor').value = transaction.valor;
+        document.getElementById('data').value = formatDateInput(transaction.data);
+        document.getElementById('tipo').value = transaction.tipo;
+        document.getElementById('categoria').value = transaction.categoria_id;
+        document.getElementById('pagador').value = transaction.pagador || '';
+    } else {
+        // Nova transação
+        title.textContent = 'Nova Transação';
+        document.getElementById('transactionId').value = '';
+        document.getElementById('data').value = formatDateInput(new Date());
+    }
+    
+    // Carregar categorias no select
+    loadCategoriesIntoSelect();
+    
+    showModal('transactionModal');
+}
+
+function openCategoryModal() {
+    const form = document.getElementById('categoryForm');
+    form.reset();
+    showModal('categoryModal');
+}
+
+async function loadCategoriesIntoSelect() {
+    if (!isSupabaseConfigured() || !CONFIG.currentUser.id) return;
+    
+    try {
+        const categories = await getCategories(CONFIG.currentUser.id);
+        
+        const selects = [
+            document.getElementById('categoria'),
+            document.getElementById('filterCategoria')
+        ];
+        
+        selects.forEach(select => {
+            if (!select) return;
+            
+            // Manter primeira opção
+            const firstOption = select.options[0];
+            select.innerHTML = '';
+            if (firstOption) {
+                select.appendChild(firstOption);
+            }
+            
+            categories.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat.id;
+                option.textContent = cat.descricao;
+                select.appendChild(option);
+            });
+        });
+    } catch (error) {
+        console.error('Erro ao carregar categorias:', error);
+    }
+}
+
+function handleSaveSupabaseConfig() {
+    const url = document.getElementById('supabaseUrl').value.trim();
+    const key = document.getElementById('supabaseKey').value.trim();
+    
+    if (!url || !key) {
+        showNotification('Preencha todos os campos', 'error');
+        return;
+    }
+    
+    saveSupabaseConfig(url, key);
+    initSupabase();
+    
+    showNotification('Configurações salvas com sucesso!', 'success');
+    
+    // Recarregar dados
+    loadDashboardData();
+}
+
+function handleExportReport() {
+    showNotification('Funcionalidade de exportação em desenvolvimento', 'info');
 }
 
 // ========== CARREGAMENTO DE DADOS ==========
@@ -495,11 +892,95 @@ async function loadTransacoesData() {
     if (!isSupabaseConfigured() || !CONFIG.currentUser.id) return;
     
     try {
-        const transactions = await getTransactions(CONFIG.currentUser.id);
-        renderTransactionsTable(transactions, 'transacoesBody');
+        const { startDate, endDate } = getPeriodDates(CONFIG.period.type);
+        
+        const transactions = await getTransactions(
+            CONFIG.currentUser.id,
+            startDate ? startDate.toISOString() : null,
+            endDate ? endDate.toISOString() : null
+        );
+        
+        renderTransactionsTable(transactions, 'allTransactionsBody', true);
+        
+        // Configurar filtros
+        setupTransactionFilters(transactions);
     } catch (error) {
         console.error('Erro ao carregar transações:', error);
         showNotification('Erro ao carregar transações', 'error');
+    }
+}
+
+function setupTransactionFilters(allTransactions) {
+    const filterTipo = document.getElementById('filterTipo');
+    const filterCategoria = document.getElementById('filterCategoria');
+    
+    const applyFilters = () => {
+        const tipo = filterTipo.value;
+        const categoria = filterCategoria.value;
+        
+        let filtered = allTransactions;
+        
+        if (tipo !== 'all') {
+            filtered = filtered.filter(t => t.tipo === tipo);
+        }
+        
+        if (categoria !== 'all') {
+            filtered = filtered.filter(t => t.categoria_id === parseInt(categoria));
+        }
+        
+        renderTransactionsTable(filtered, 'allTransactionsBody', true);
+    };
+    
+    filterTipo.addEventListener('change', applyFilters);
+    filterCategoria.addEventListener('change', applyFilters);
+}
+
+async function loadCategoriasData() {
+    if (!isSupabaseConfigured() || !CONFIG.currentUser.id) return;
+    
+    try {
+        const categories = await getCategories(CONFIG.currentUser.id);
+        renderCategoriesGrid(categories);
+    } catch (error) {
+        console.error('Erro ao carregar categorias:', error);
+        showNotification('Erro ao carregar categorias', 'error');
+    }
+}
+
+async function loadRelatoriosData() {
+    if (!isSupabaseConfigured() || !CONFIG.currentUser.id) return;
+    
+    try {
+        // Dados do mês atual
+        const today = new Date();
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        
+        const totals = await calculateTotals(
+            CONFIG.currentUser.id,
+            startOfMonth.toISOString(),
+            endOfMonth.toISOString()
+        );
+        
+        document.getElementById('reportReceitas').textContent = formatCurrency(totals.receitas);
+        document.getElementById('reportDespesas').textContent = formatCurrency(totals.despesas);
+        document.getElementById('reportSaldo').textContent = formatCurrency(totals.saldo);
+        
+        // Despesas por categoria
+        const expensesByCategory = await calculateExpensesByCategory(
+            CONFIG.currentUser.id,
+            startOfMonth.toISOString(),
+            endOfMonth.toISOString()
+        );
+        createReportCategoryChart(expensesByCategory);
+        
+        // Fluxo de caixa
+        const monthlyTrends = await calculateMonthlyTrends(CONFIG.currentUser.id);
+        createReportFlowChart(monthlyTrends);
+        
+    } catch (error) {
+        console.error('Erro ao carregar relatórios:', error);
+        showNotification('Erro ao carregar relatórios', 'error');
     }
 }
 
@@ -507,125 +988,192 @@ async function loadUsuariosData() {
     if (!isSupabaseConfigured()) return;
     
     try {
-        const { data: usuarios, error } = await supabaseClient
-            .from('usuarios')
-            .select('*')
-            .order('id', { ascending: true });
-        
-        if (error) throw error;
-        
-        const tbody = document.getElementById('usuariosBody');
-        tbody.innerHTML = '';
-        
-        usuarios.forEach(user => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${user.id}</td>
-                <td>${user.nome}</td>
-                <td>${user.email}</td>
-                <td>${user.celular}</td>
-                <td><span class="badge badge-${user.status === 'ativo' ? 'success' : 'danger'}">${user.status}</span></td>
-            `;
-            tbody.appendChild(row);
-        });
+        const users = await getAllUsers();
+        renderUsersTable(users);
     } catch (error) {
         console.error('Erro ao carregar usuários:', error);
         showNotification('Erro ao carregar usuários', 'error');
     }
 }
 
-// ========== FUNÇÕES AUXILIARES ==========
+async function loadConfiguracoesData() {
+    // Carregar configurações atuais
+    document.getElementById('supabaseUrl').value = CONFIG.supabase.url;
+    document.getElementById('supabaseKey').value = CONFIG.supabase.key;
+    
+    if (!isSupabaseConfigured()) return;
+    
+    try {
+        // Estatísticas gerais
+        const users = await getAllUsers();
+        const categories = await getCategories(CONFIG.currentUser.id);
+        const transactions = await getTransactions(CONFIG.currentUser.id);
+        
+        document.getElementById('totalUsers').textContent = users.length;
+        document.getElementById('totalTransactions').textContent = transactions.length;
+        document.getElementById('totalCategories').textContent = categories.length;
+    } catch (error) {
+        console.error('Erro ao carregar configurações:', error);
+    }
+}
 
-function renderTransactionsTable(transactions, tableId) {
-    const tbody = document.getElementById(tableId);
-    tbody.innerHTML = '';
+// ========== RENDERIZAÇÃO DE TABELAS ==========
+
+function renderTransactionsTable(transactions, tbodyId, showAllColumns = false) {
+    const tbody = document.getElementById(tbodyId);
+    if (!tbody) return;
     
     if (transactions.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">Nenhuma transação encontrada</td></tr>';
+        tbody.innerHTML = `<tr><td colspan="${showAllColumns ? 7 : 6}" class="no-data">Nenhuma transação encontrada</td></tr>`;
         return;
     }
     
-    transactions.forEach(transaction => {
-        const row = document.createElement('tr');
-        const categoryName = transaction.categoria_trasacoes?.descricao || 'Sem categoria';
-        const isReceita = transaction.tipo === 'entrada';
-        
-        row.innerHTML = `
-            <td>${formatDate(transaction.data)}</td>
-            <td>${transaction.descricao}</td>
-            <td>${categoryName}</td>
-            <td><span class="badge badge-${isReceita ? 'success' : 'danger'}">${isReceita ? 'Receita' : 'Despesa'}</span></td>
-            <td style="color: ${isReceita ? 'var(--success-color)' : 'var(--danger-color)'}; font-weight: bold;">
-                ${isReceita ? '+' : '-'} ${formatCurrency(transaction.valor)}
+    tbody.innerHTML = transactions.map(t => `
+        <tr>
+            <td>${formatDate(t.data)}</td>
+            <td>${t.descricao}</td>
+            <td>${t.categoria_trasacoes?.descricao || (Array.isArray(t.categoria_trasacoes) ? t.categoria_trasacoes[0]?.descricao : 'Sem categoria')}</td>
+            ${showAllColumns ? `<td><span class="badge badge-${t.tipo}">${t.tipo === 'entrada' ? 'Receita' : 'Despesa'}</span></td>` : ''}
+            ${showAllColumns ? `<td>${t.pagador || '-'}</td>` : ''}
+            <td style="color: ${t.tipo === 'entrada' ? 'var(--success-color)' : 'var(--danger-color)'}; font-weight: 600;">
+                ${t.tipo === 'entrada' ? '+' : '-'} ${formatCurrency(t.valor)}
             </td>
             <td>
-                <button class="btn btn-sm btn-secondary" onclick="editTransaction(${transaction.id})">
+                <button class="btn-icon" onclick="editTransaction(${t.id})" title="Editar">
                     <i class="fas fa-edit"></i>
                 </button>
-                <button class="btn btn-sm btn-danger" onclick="deleteTransaction(${transaction.id})">
+                <button class="btn-icon" onclick="deleteTransactionConfirm(${t.id})" title="Excluir">
                     <i class="fas fa-trash"></i>
                 </button>
             </td>
-        `;
-        tbody.appendChild(row);
-    });
+        </tr>
+    `).join('');
 }
 
-function initializeUI() {
-    console.log('⚙️ [UI] Inicializando interface...');
-    setupSidebar();
-    setupTheme();
-    setupPeriodFilters();
-    setupForms();
-}
-
-function setupForms() {
-    console.log('📋 [FORMS] Configurando formulários...');
-}
-
-function getPeriodDates(period) {
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+function renderCategoriesGrid(categories) {
+    const grid = document.getElementById('categoriesGrid');
+    if (!grid) return;
     
-    switch(period) {
-        case 'today':
-            return {
-                startDate: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
-                endDate: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59)
-            };
-        case 'week':
-            const weekStart = new Date(now);
-            weekStart.setDate(now.getDate() - now.getDay());
-            return {
-                startDate: weekStart,
-                endDate: now
-            };
-        case 'month':
-            return { startDate: startOfMonth, endDate: endOfMonth };
-        case 'custom':
-            return {
-                startDate: CONFIG.period.startDate ? new Date(CONFIG.period.startDate) : startOfMonth,
-                endDate: CONFIG.period.endDate ? new Date(CONFIG.period.endDate) : endOfMonth
-            };
-        default:
-            return { startDate: startOfMonth, endDate: endOfMonth };
+    if (categories.length === 0) {
+        grid.innerHTML = '<p class="no-data">Nenhuma categoria encontrada</p>';
+        return;
+    }
+    
+    grid.innerHTML = categories.map(cat => `
+        <div class="category-card">
+            <div class="category-info">
+                <h4>${cat.descricao}</h4>
+                <p>ID: ${cat.id}</p>
+            </div>
+            <button class="btn-icon" onclick="deleteCategoryConfirm(${cat.id})" title="Excluir">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    `).join('');
+}
+
+function renderUsersTable(users) {
+    const tbody = document.getElementById('usersBody');
+    if (!tbody) return;
+    
+    if (users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="no-data">Nenhum usuário encontrado</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = users.map(u => `
+        <tr>
+            <td>${u.id}</td>
+            <td>${u.nome || '-'}</td>
+            <td>${u.celular || '-'}</td>
+            <td><span class="badge badge-${u.status}">${u.status === 'ativo' ? 'Ativo' : 'Inativo'}</span></td>
+            <td>${formatDate(u.created_at)}</td>
+            <td>
+                <button class="btn-icon" onclick="toggleUserStatus(${u.id}, '${u.status}')" title="Alterar Status">
+                    <i class="fas fa-toggle-${u.status === 'ativo' ? 'on' : 'off'}"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// ========== AÇÕES DE TRANSAÇÕES ==========
+
+async function editTransaction(id) {
+    if (!isSupabaseConfigured() || !CONFIG.currentUser.id) return;
+    
+    try {
+        const transactions = await getTransactions(CONFIG.currentUser.id);
+        const transaction = transactions.find(t => t.id === id);
+        
+        if (transaction) {
+            openTransactionModal(transaction);
+        }
+    } catch (error) {
+        console.error('Erro ao buscar transação:', error);
+        showNotification('Erro ao buscar transação', 'error');
     }
 }
 
-function calculateFinancialHealth(receitas, despesas) {
-    if (receitas === 0) return 0;
-    const ratio = (receitas - despesas) / receitas;
-    return Math.max(0, Math.min(100, Math.round(ratio * 100)));
+async function deleteTransactionConfirm(id) {
+    if (!confirm('Tem certeza que deseja excluir esta transação?')) {
+        return;
+    }
+    
+    if (!isSupabaseConfigured() || !CONFIG.currentUser.id) return;
+    
+    try {
+        await deleteTransaction(id, CONFIG.currentUser.id);
+        showNotification('Transação excluída com sucesso!', 'success');
+        
+        // Recarregar dados
+        const currentPage = document.querySelector('.nav-item.active').getAttribute('data-page');
+        loadPageData(currentPage);
+    } catch (error) {
+        console.error('Erro ao excluir transação:', error);
+        showNotification('Erro ao excluir transação', 'error');
+    }
 }
 
-function getHealthMessage(score) {
-    if (score >= 80) return 'Excelente';
-    if (score >= 60) return 'Bom';
-    if (score >= 40) return 'Regular';
-    if (score >= 20) return 'Preocupante';
-    return 'Crítico';
+// ========== AÇÕES DE CATEGORIAS ==========
+
+async function deleteCategoryConfirm(id) {
+    if (!confirm('Tem certeza que deseja excluir esta categoria?')) {
+        return;
+    }
+    
+    if (!isSupabaseConfigured() || !CONFIG.currentUser.id) return;
+    
+    try {
+        await deleteCategory(id, CONFIG.currentUser.id);
+        showNotification('Categoria excluída com sucesso!', 'success');
+        
+        await loadCategoriasData();
+        await loadCategoriesIntoSelect();
+    } catch (error) {
+        console.error('Erro ao excluir categoria:', error);
+        showNotification('Erro ao excluir categoria', 'error');
+    }
 }
 
-// ========== INICIALIZAR AO CARREGAR ==========
-window.addEventListener('DOMContentLoaded', initializeApp);
+// ========== AÇÕES DE USUÁRIOS ==========
+
+async function toggleUserStatus(userId, currentStatus) {
+    const newStatus = currentStatus === 'ativo' ? 'inativo' : 'ativo';
+    
+    if (!confirm(`Tem certeza que deseja ${newStatus === 'ativo' ? 'ativar' : 'desativar'} este usuário?`)) {
+        return;
+    }
+    
+    if (!isSupabaseConfigured()) return;
+    
+    try {
+        await updateUserStatus(userId, newStatus);
+        showNotification('Status atualizado com sucesso!', 'success');
+        
+        await loadUsuariosData();
+    } catch (error) {
+        console.error('Erro ao atualizar status:', error);
+        showNotification('Erro ao atualizar status', 'error');
+    }
+}

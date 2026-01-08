@@ -110,7 +110,7 @@ function handleLogout() {
 }
 
 function redirectToWhatsAppSignup() {
-    const phone = "5511999999999"; // Substitua pelo número do seu bot
+    const phone = "553298416669"; // Substitua pelo número do seu bot
     const text = encodeURIComponent("Olá! Gostaria de me cadastrar no MordomoPay.");
     window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
 }

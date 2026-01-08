@@ -53,7 +53,7 @@ Se ainda não tiver usuários cadastrados via WhatsApp:
 2. Clique em **Insert row**
 3. Preencha:
    - `nome`: Seu nome
-   - `telefone`: Seu número (ex: 5511999999999)
+   - `telefone`: Seu número (ex: 553298416669)
    - `status`: ativo
 4. Salve e anote o `id` gerado
 5. Use esse `id` para fazer login no dashboard

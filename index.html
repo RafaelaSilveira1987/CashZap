@@ -3,552 +3,384 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GranaZap - Dashboard Financeiro</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <title>GranaZap - Controle Financeiro</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <div class="logo">
-                <i class="fas fa-wallet"></i>
-                <h2>GranaZap</h2>
+    <!-- Modal de Login -->
+    <div id="loginModal" class="modal active">
+        <div class="modal-content login-modal">
+            <div class="login-header">
+                <h1><i class="fas fa-wallet"></i> GranaZap</h1>
+                <p>Controle suas finanças via WhatsApp</p>
             </div>
-            <button class="toggle-btn" id="toggleSidebar">
-                <i class="fas fa-bars"></i>
-            </button>
-        </div>
-        
-        <nav class="sidebar-nav">
-            <a href="#" class="nav-item active" data-page="dashboard">
-                <i class="fas fa-chart-line"></i>
-                <span>Dashboard</span>
-            </a>
-            <a href="#" class="nav-item" data-page="receitas">
-                <i class="fas fa-arrow-up"></i>
-                <span>Receitas</span>
-            </a>
-            <a href="#" class="nav-item" data-page="despesas">
-                <i class="fas fa-arrow-down"></i>
-                <span>Despesas</span>
-            </a>
-            <a href="#" class="nav-item" data-page="transacoes">
-                <i class="fas fa-exchange-alt"></i>
-                <span>Transações</span>
-            </a>
-            <a href="#" class="nav-item" data-page="categorias">
-                <i class="fas fa-tags"></i>
-                <span>Categorias</span>
-            </a>
-            <a href="#" class="nav-item" data-page="relatorios">
-                <i class="fas fa-file-alt"></i>
-                <span>Relatórios</span>
-            </a>
-            <a href="#" class="nav-item" data-page="usuarios">
-                <i class="fas fa-users"></i>
-                <span>Usuários</span>
-            </a>
-            <a href="#" class="nav-item" data-page="configuracoes">
-                <i class="fas fa-cog"></i>
-                <span>Configurações</span>
-            </a>
-        </nav>
 
-        <div class="sidebar-footer">
-            <div class="theme-toggle">
-                <button id="themeToggle">
-                    <i class="fas fa-moon"></i>
-                    <span>Tema Escuro</span>
+            <div id="loginError" class="error-message" style="display: none;"></div>
+
+            <!-- Tela de Login Normal -->
+            <div id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="loginUser">Celular ou Email</label>
+                    <input type="text" id="loginUser" placeholder="Seu celular ou email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="loginPassword">Senha</label>
+                    <input type="password" id="loginPassword" placeholder="Sua senha" required>
+                </div>
+
+                <button type="button" class="btn btn-primary" onclick="handleLogin()">
+                    <i class="fas fa-sign-in-alt"></i> Entrar
+                </button>
+
+                <div class="login-divider">
+                    <span>ou</span>
+                </div>
+
+                <button type="button" class="btn btn-whatsapp" onclick="redirectToWhatsAppSignup()">
+                    <i class="fab fa-whatsapp"></i> Cadastre-se via WhatsApp
                 </button>
             </div>
-            <div class="user-info">
-                <i class="fas fa-user-circle"></i>
-                <span id="userName">Usuário</span>
-            </div>
-            <button class="logout-btn" id="logoutBtn">
-                <i class="fas fa-sign-out-alt"></i>
-                <span>Sair</span>
-            </button>
-        </div>
-    </aside>
 
-    <!-- Main Content -->
-    <main class="main-content">
+            <!-- Tela de Criação de Senha (Primeiro Acesso) -->
+            <div id="setPasswordForm" class="login-form" style="display: none;">
+                <div class="success-message">
+                    ✅ Parabéns! Você foi cadastrado com sucesso!
+                </div>
+
+                <p style="text-align: center; margin-bottom: 20px; color: var(--text-secondary);">
+                    Agora crie uma senha para acessar seu dashboard
+                </p>
+
+                <div class="form-group">
+                    <label for="newPassword">Nova Senha</label>
+                    <input type="password" id="newPassword" placeholder="Mínimo 8 caracteres" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">Confirmar Senha</label>
+                    <input type="password" id="confirmPassword" placeholder="Confirme sua senha" required>
+                </div>
+
+                <button type="button" class="btn btn-primary" onclick="handleSetPassword()">
+                    <i class="fas fa-lock"></i> Criar Senha e Acessar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Principal -->
+    <div id="dashboardContainer" class="dashboard-container" style="display: none;">
         <!-- Header -->
         <header class="header">
             <div class="header-left">
-                <button class="mobile-toggle" id="mobileToggle">
+                <button id="mobileToggle" class="mobile-toggle">
                     <i class="fas fa-bars"></i>
                 </button>
-                <h1 id="pageTitle">Dashboard</h1>
+                <div class="logo">
+                    <i class="fas fa-wallet"></i>
+                    <h2>GranaZap</h2>
+                </div>
             </div>
             <div class="header-right">
-                <div class="period-filter">
-                    <button class="filter-btn active" data-period="today">Hoje</button>
-                    <button class="filter-btn" data-period="week">Semana</button>
-                    <button class="filter-btn" data-period="month">Mês</button>
-                    <button class="filter-btn" data-period="custom">Personalizado</button>
-                </div>
-                <div class="custom-date-range" id="customDateRange" style="display: none;">
-                    <input type="date" id="startDate">
-                    <span>até</span>
-                    <input type="date" id="endDate">
-                    <button id="applyDateRange">Aplicar</button>
-                </div>
+                <button id="themeToggle" class="icon-btn">
+                    <i class="fas fa-moon"></i>
+                    <span>Tema Escuro</span>
+                </button>
+                <button id="logoutBtn" class="icon-btn" onclick="handleLogout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Sair</span>
+                </button>
             </div>
         </header>
 
-        <!-- Dashboard Content -->
-        <div class="content" id="content">
-            <!-- Dashboard Page -->
-            <div class="page active" id="dashboard-page">
-                <!-- Summary Cards -->
-                <div class="summary-cards">
-                    <div class="card card-receitas">
-                        <div class="card-icon">
-                            <i class="fas fa-arrow-up"></i>
-                        </div>
-                        <div class="card-content">
-                            <h3>Receitas</h3>
-                            <p class="card-value" id="totalReceitas">R$ 0,00</p>
-                            <span class="card-label">Total de entradas</span>
-                        </div>
-                    </div>
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-wallet"></i>
+                    <h2>GranaZap</h2>
+                </div>
+                <button id="toggleSidebar" class="toggle-btn">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            </div>
 
-                    <div class="card card-despesas">
-                        <div class="card-icon">
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" onclick="showPage('dashboard')">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="nav-item" onclick="showPage('receitas')">
+                    <i class="fas fa-arrow-down"></i>
+                    <span>Receitas</span>
+                </a>
+                <a href="#" class="nav-item" onclick="showPage('despesas')">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>Despesas</span>
+                </a>
+                <a href="#" class="nav-item" onclick="showPage('transacoes')">
+                    <i class="fas fa-exchange-alt"></i>
+                    <span>Transações</span>
+                </a>
+                <a href="#" class="nav-item" onclick="showPage('categorias')">
+                    <i class="fas fa-tags"></i>
+                    <span>Categorias</span>
+                </a>
+                <a href="#" class="nav-item" onclick="showPage('relatorios')">
+                    <i class="fas fa-file-chart-line"></i>
+                    <span>Relatórios</span>
+                </a>
+                <a href="#" class="nav-item" onclick="showPage('usuarios')">
+                    <i class="fas fa-users"></i>
+                    <span>Usuários</span>
+                </a>
+                <a href="#" class="nav-item" onclick="showPage('configuracoes')">
+                    <i class="fas fa-cog"></i>
+                    <span>Configurações</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button id="logoutBtnSidebar" class="btn btn-danger" onclick="handleLogout()">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Página: Dashboard -->
+            <section id="dashboardPage" class="page active">
+                <div class="page-header">
+                    <h1 id="pageTitle">Dashboard</h1>
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" data-period="today">Hoje</button>
+                        <button class="filter-btn" data-period="week">Semana</button>
+                        <button class="filter-btn" data-period="month">Mês</button>
+                        <button class="filter-btn" data-period="custom">Personalizado</button>
+                    </div>
+                    <div id="customDateRange" class="date-range" style="display: none;">
+                        <input type="date" id="startDate">
+                        <input type="date" id="endDate">
+                        <button id="applyDateRange" class="btn btn-sm btn-primary">Aplicar</button>
+                    </div>
+                </div>
+
+                <!-- Cards de Resumo -->
+                <div class="cards-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Receitas</h3>
                             <i class="fas fa-arrow-down"></i>
                         </div>
-                        <div class="card-content">
-                            <h3>Despesas</h3>
-                            <p class="card-value" id="totalDespesas">R$ 0,00</p>
-                            <span class="card-label">Total de saídas</span>
-                        </div>
+                        <div class="card-value" id="totalReceitas">R$ 0,00</div>
                     </div>
-
-                    <div class="card card-saldo">
-                        <div class="card-icon">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Despesas</h3>
+                            <i class="fas fa-arrow-up"></i>
+                        </div>
+                        <div class="card-value" id="totalDespesas">R$ 0,00</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Saldo</h3>
                             <i class="fas fa-wallet"></i>
                         </div>
-                        <div class="card-content">
-                            <h3>Saldo</h3>
-                            <p class="card-value" id="saldo">R$ 0,00</p>
-                            <span class="card-label">Receitas - Despesas</span>
-                        </div>
+                        <div class="card-value" id="saldo">R$ 0,00</div>
                     </div>
-
-                    <div class="card card-saude">
-                        <div class="card-icon">
-                            <i class="fas fa-heart-pulse"></i>
-                        </div>
-                        <div class="card-content">
+                    <div class="card">
+                        <div class="card-header">
                             <h3>Saúde Financeira</h3>
-                            <div class="health-meter">
-                                <div class="health-bar">
-                                    <div class="health-fill" id="healthFill" style="width: 0%"></div>
-                                </div>
-                                <p class="card-value" id="healthScore">0</p>
+                            <i class="fas fa-heart"></i>
+                        </div>
+                        <div class="health-meter">
+                            <div class="health-bar">
+                                <div id="healthFill" class="health-fill" style="width: 0%"></div>
                             </div>
-                            <span class="card-label" id="healthLabel">Calcular</span>
+                            <div class="health-text">
+                                <span id="healthScore">0</span>%
+                                <small id="healthLabel">Crítico</small>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Charts Section -->
-                <div class="charts-section">
+                <!-- Gráficos -->
+                <div class="charts-grid">
                     <div class="chart-container">
-                        <div class="chart-header">
-                            <h3>Despesas por Categoria</h3>
-                        </div>
+                        <h3>Despesas por Categoria</h3>
                         <canvas id="categoryChart"></canvas>
                     </div>
-
                     <div class="chart-container">
-                        <div class="chart-header">
-                            <h3>Tendências Mensais</h3>
-                        </div>
+                        <h3>Tendências Mensais</h3>
                         <canvas id="trendChart"></canvas>
                     </div>
                 </div>
 
-                <!-- Recent Transactions -->
-                <div class="transactions-section">
-                    <div class="section-header">
-                        <h3>Transações Recentes</h3>
-                        <button class="btn-primary" id="addTransactionBtn">
-                            <i class="fas fa-plus"></i> Nova Transação
-                        </button>
-                    </div>
-                    <div class="table-container">
-                        <table class="transactions-table" id="transactionsTable">
-                            <thead>
-                                <tr>
-                                    <th>Data</th>
-                                    <th>Descrição</th>
-                                    <th>Categoria</th>
-                                    <th>Tipo</th>
-                                    <th>Valor</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="transactionsBody">
-                                <tr>
-                                    <td colspan="6" class="no-data">Nenhuma transação encontrada</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Receitas Page -->
-            <div class="page" id="receitas-page">
-                <div class="page-header">
-                    <h2>Receitas</h2>
-                    <button class="btn-primary" id="addReceitaBtn">
-                        <i class="fas fa-plus"></i> Nova Receita
-                    </button>
-                </div>
+                <!-- Tabela de Transações -->
                 <div class="table-container">
-                    <table class="transactions-table">
-                        <thead>
-                            <tr>
-                                <th>Data</th>
-                                <th>Descrição</th>
-                                <th>Categoria</th>
-                                <th>Pagador</th>
-                                <th>Valor</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="receitasBody">
-                            <tr>
-                                <td colspan="6" class="no-data">Nenhuma receita encontrada</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Despesas Page -->
-            <div class="page" id="despesas-page">
-                <div class="page-header">
-                    <h2>Despesas</h2>
-                    <button class="btn-primary" id="addDespesaBtn">
-                        <i class="fas fa-plus"></i> Nova Despesa
-                    </button>
-                </div>
-                <div class="table-container">
-                    <table class="transactions-table">
-                        <thead>
-                            <tr>
-                                <th>Data</th>
-                                <th>Descrição</th>
-                                <th>Categoria</th>
-                                <th>Pagador</th>
-                                <th>Valor</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="despesasBody">
-                            <tr>
-                                <td colspan="6" class="no-data">Nenhuma despesa encontrada</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Transações Page -->
-            <div class="page" id="transacoes-page">
-                <div class="page-header">
-                    <h2>Todas as Transações</h2>
-                    <div class="filter-group">
-                        <select id="filterTipo">
-                            <option value="all">Todos os tipos</option>
-                            <option value="entrada">Receitas</option>
-                            <option value="saida">Despesas</option>
-                        </select>
-                        <select id="filterCategoria">
-                            <option value="all">Todas as categorias</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="table-container">
-                    <table class="transactions-table">
+                    <h3>Transações Recentes</h3>
+                    <table class="data-table">
                         <thead>
                             <tr>
                                 <th>Data</th>
                                 <th>Descrição</th>
                                 <th>Categoria</th>
                                 <th>Tipo</th>
-                                <th>Pagador</th>
                                 <th>Valor</th>
                                 <th>Ações</th>
                             </tr>
                         </thead>
-                        <tbody id="allTransactionsBody">
+                        <tbody id="transactionsBody">
                             <tr>
-                                <td colspan="7" class="no-data">Nenhuma transação encontrada</td>
+                                <td colspan="6" style="text-align: center; color: var(--text-secondary);">
+                                    Carregando...
+                                </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </section>
 
-            <!-- Categorias Page -->
-            <div class="page" id="categorias-page">
+            <!-- Outras Páginas (Receitas, Despesas, etc) -->
+            <section id="receitasPage" class="page" style="display: none;">
                 <div class="page-header">
-                    <h2>Categorias</h2>
-                    <button class="btn-primary" id="addCategoriaBtn">
-                        <i class="fas fa-plus"></i> Nova Categoria
-                    </button>
-                </div>
-                <div class="categories-grid" id="categoriesGrid">
-                    <p class="no-data">Nenhuma categoria encontrada</p>
-                </div>
-            </div>
-
-            <!-- Relatórios Page -->
-            <div class="page" id="relatorios-page">
-                <div class="page-header">
-                    <h2>Relatórios</h2>
-                    <button class="btn-primary" id="exportReportBtn">
-                        <i class="fas fa-download"></i> Exportar PDF
-                    </button>
-                </div>
-                
-                <div class="report-section">
-                    <h3>Balanço Mensal</h3>
-                    <div class="summary-cards">
-                        <div class="card">
-                            <h4>Receitas do Mês</h4>
-                            <p class="card-value" id="reportReceitas">R$ 0,00</p>
-                        </div>
-                        <div class="card">
-                            <h4>Despesas do Mês</h4>
-                            <p class="card-value" id="reportDespesas">R$ 0,00</p>
-                        </div>
-                        <div class="card">
-                            <h4>Saldo do Mês</h4>
-                            <p class="card-value" id="reportSaldo">R$ 0,00</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="report-section">
-                    <h3>Análise por Categoria</h3>
-                    <div class="chart-container">
-                        <canvas id="reportCategoryChart"></canvas>
-                    </div>
-                </div>
-
-                <div class="report-section">
-                    <h3>Fluxo de Caixa (Últimos 6 Meses)</h3>
-                    <div class="chart-container">
-                        <canvas id="reportFlowChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Usuários Page -->
-            <div class="page" id="usuarios-page">
-                <div class="page-header">
-                    <h2>Gestão de Usuários</h2>
-                    <button class="btn-primary" id="addUserBtn">
-                        <i class="fas fa-plus"></i> Novo Usuário
-                    </button>
+                    <h1 id="pageTitle">Receitas</h1>
                 </div>
                 <div class="table-container">
-                    <table class="transactions-table">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Descrição</th>
+                                <th>Categoria</th>
+                                <th>Valor</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="receitasBody">
+                            <tr>
+                                <td colspan="5" style="text-align: center;">Carregando...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="despesasPage" class="page" style="display: none;">
+                <div class="page-header">
+                    <h1 id="pageTitle">Despesas</h1>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Descrição</th>
+                                <th>Categoria</th>
+                                <th>Valor</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="despesasBody">
+                            <tr>
+                                <td colspan="5" style="text-align: center;">Carregando...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="transacoesPage" class="page" style="display: none;">
+                <div class="page-header">
+                    <h1 id="pageTitle">Todas as Transações</h1>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Descrição</th>
+                                <th>Categoria</th>
+                                <th>Tipo</th>
+                                <th>Valor</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transacoesBody">
+                            <tr>
+                                <td colspan="6" style="text-align: center;">Carregando...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="categoriasPage" class="page" style="display: none;">
+                <div class="page-header">
+                    <h1 id="pageTitle">Categorias</h1>
+                </div>
+                <p style="text-align: center; color: var(--text-secondary); padding: 40px;">
+                    Gerenciamento de categorias em desenvolvimento
+                </p>
+            </section>
+
+            <section id="relatoriosPage" class="page" style="display: none;">
+                <div class="page-header">
+                    <h1 id="pageTitle">Relatórios</h1>
+                </div>
+                <p style="text-align: center; color: var(--text-secondary); padding: 40px;">
+                    Relatórios em desenvolvimento
+                </p>
+            </section>
+
+            <section id="usuariosPage" class="page" style="display: none;">
+                <div class="page-header">
+                    <h1 id="pageTitle">Usuários</h1>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
                         <thead>
                             <tr>
                                 <th>ID</th>
                                 <th>Nome</th>
-                                <th>Telefone</th>
+                                <th>Email</th>
+                                <th>Celular</th>
                                 <th>Status</th>
-                                <th>Data Cadastro</th>
-                                <th>Ações</th>
                             </tr>
                         </thead>
-                        <tbody id="usersBody">
+                        <tbody id="usuariosBody">
                             <tr>
-                                <td colspan="6" class="no-data">Nenhum usuário encontrado</td>
+                                <td colspan="5" style="text-align: center;">Carregando...</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </section>
 
-            <!-- Configurações Page -->
-            <div class="page" id="configuracoes-page">
+            <section id="configuracoesPage" class="page" style="display: none;">
                 <div class="page-header">
-                    <h2>Configurações</h2>
+                    <h1 id="pageTitle">Configurações</h1>
                 </div>
-                
-                <div class="config-section">
+                <div class="settings-container">
                     <h3>Conexão com Supabase</h3>
                     <div class="form-group">
-                        <label for="supabaseUrl">URL do Supabase</label>
+                        <label>URL do Supabase</label>
                         <input type="text" id="supabaseUrl" placeholder="https://seu-projeto.supabase.co">
                     </div>
                     <div class="form-group">
-                        <label for="supabaseKey">Chave Anon do Supabase</label>
-                        <input type="password" id="supabaseKey" placeholder="sua-chave-anon">
+                        <label>Chave Anon do Supabase</label>
+                        <input type="password" id="supabaseKey" placeholder="Sua chave pública">
                     </div>
-                    <button class="btn-primary" id="saveSupabaseConfig">Salvar Configurações</button>
-                </div>
-
-                <div class="config-section">
-                    <h3>Informações do Sistema</h3>
-                    <div class="info-grid">
-                        <div class="info-item">
-                            <span>Total de Usuários:</span>
-                            <strong id="totalUsers">0</strong>
-                        </div>
-                        <div class="info-item">
-                            <span>Total de Transações:</span>
-                            <strong id="totalTransactions">0</strong>
-                        </div>
-                        <div class="info-item">
-                            <span>Total de Categorias:</span>
-                            <strong id="totalCategories">0</strong>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- Modal para adicionar/editar transação -->
-    <div class="modal" id="transactionModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modalTitle">Nova Transação</h3>
-                <button class="close-btn" id="closeModal">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="transactionForm">
-                    <input type="hidden" id="transactionId">
-                    <div class="form-group">
-                        <label for="descricao">Descrição</label>
-                        <input type="text" id="descricao" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="valor">Valor</label>
-                        <input type="number" id="valor" step="0.01" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="data">Data</label>
-                        <input type="date" id="data" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="tipo">Tipo</label>
-                        <select id="tipo" required>
-                            <option value="entrada">Receita</option>
-                            <option value="saida">Despesa</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="categoria">Categoria</label>
-                        <select id="categoria" required>
-                            <option value="">Selecione uma categoria</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="pagador">Pagador/Recebedor</label>
-                        <input type="text" id="pagador">
-                    </div>
-                    <div class="form-actions">
-                        <button type="button" class="btn-secondary" id="cancelBtn">Cancelar</button>
-                        <button type="submit" class="btn-primary">Salvar</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal para adicionar categoria -->
-    <div class="modal" id="categoryModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Nova Categoria</h3>
-                <button class="close-btn" id="closeCategoryModal">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="categoryForm">
-                    <div class="form-group">
-                        <label for="categoryName">Nome da Categoria</label>
-                        <input type="text" id="categoryName" required>
-                    </div>
-                    <div class="form-actions">
-                        <button type="button" class="btn-secondary" id="cancelCategoryBtn">Cancelar</button>
-                        <button type="submit" class="btn-primary">Salvar</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal de Configuracoes (Acessivel antes do login) -->
-    <div class="modal" id="configBeforeLoginModal">
-        <div class="modal-content" style="max-width: 500px;">
-            <div class="modal-header">
-                <h3>Configurar Supabase</h3>
-                <button class="close-btn" id="closeConfigBeforeLoginModal">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="configBeforeLoginForm">
-                    <div class="form-group">
-                        <label for="configBeforeLoginUrl">URL do Supabase</label>
-                        <input type="text" id="configBeforeLoginUrl" placeholder="https://seu-projeto.supabase.co" required>
-                        <small>Encontre em: Project Settings > API > Project URL</small>
-                    </div>
-                    <div class="form-group">
-                        <label for="configBeforeLoginKey">Chave Anon do Supabase</label>
-                        <input type="password" id="configBeforeLoginKey" placeholder="sua-chave-anon" required>
-                        <small>Encontre em: Project Settings > API > anon public</small>
-                    </div>
-                    <div class="form-actions">
-                        <button type="button" class="btn-secondary" id="cancelConfigBeforeLoginBtn">Cancelar</button>
-                        <button type="submit" class="btn-primary">Salvar e Voltar</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal de Login -->
-    <div class="modal active" id="loginModal">
-        <div class="modal-content login-modal">
-            <div class="login-header">
-                <i class="fas fa-wallet"></i>
-                <h2>GranaZap</h2>
-                <p>Dashboard Financeiro</p>
-            </div>
-            <div class="modal-body">
-                <form id="loginForm">
-                    <div class="form-group">
-                        <label for="loginUser">Usuário (ID ou Telefone)</label>
-                        <input type="text" id="loginUser" required placeholder="Digite seu ID ou telefone">
-                    </div>
-                    <button type="submit" class="btn-primary btn-block">Entrar</button>
-                </form>
-                <div class="login-footer">
-                    <p>Primeira vez aqui?</p>
-                    <button type="button" class="btn-secondary btn-block" id="configBeforeLoginBtn" style="margin-top: 10px;">
-                        <i class="fas fa-cog"></i> Configurar Supabase Primeiro
+                    <button class="btn btn-primary" onclick="saveSupabaseSettings()">
+                        Salvar Configurações
                     </button>
                 </div>
-            </div>
-        </div>
+            </section>
+        </main>
     </div>
 
     <!-- Scripts -->

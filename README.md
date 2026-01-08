@@ -1,4 +1,4 @@
-# Dashboard de Controle Financeiro - GranaZap
+# Dashboard de Controle Financeiro - MordomoPay
 
 Sistema completo de controle financeiro multiusuário com integração WhatsApp, N8N e Supabase.
 

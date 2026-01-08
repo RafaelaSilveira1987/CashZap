@@ -1,6 +1,6 @@
-# Manual Final do Usuário - Dashboard GranaZap
+# Manual Final do Usuário - Dashboard MordomoPay
 
-## 🎯 Bem-vindo ao GranaZap!
+## 🎯 Bem-vindo ao MordomoPay!
 
 Este é o seu guia completo para usar o dashboard de controle financeiro integrado ao seu fluxo de WhatsApp via N8N.
 
@@ -23,7 +23,7 @@ Este é o seu guia completo para usar o dashboard de controle financeiro integra
 
 ### Passo 1: Acessar o Dashboard
 1. Abra seu navegador e acesse: `https://cash-zap.vercel.app` (ou a URL do seu servidor)
-2. Você verá a tela de login do GranaZap
+2. Você verá a tela de login do MordomoPay
 
 ### Passo 2: Configurar o Supabase (Primeira Vez)
 Se for a primeira vez, você precisa configurar a conexão com o banco de dados:
@@ -235,6 +235,6 @@ Agora que você conhece o dashboard:
 
 ---
 
-**Parabéns! Você está pronto para usar o GranaZap!** 🎉
+**Parabéns! Você está pronto para usar o MordomoPay!** 🎉
 
 Para dúvidas sobre a configuração do fluxo N8N, consulte o arquivo `manual_fluxo_e_canal.md`.

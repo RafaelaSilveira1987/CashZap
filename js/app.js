@@ -146,38 +146,63 @@ async function loadPageData(pageName) {
 // ========== SIDEBAR ==========
 
 function setupSidebar() {
+    console.log('[SIDEBAR] Configurando sidebar...');
     const toggleBtn = document.getElementById('toggleSidebar');
     const mobileToggle = document.getElementById('mobileToggle');
     const sidebar = document.getElementById('sidebar');
     
     if (toggleBtn) {
-        toggleBtn.addEventListener('click', function() {
+        console.log('   Botao toggle encontrado');
+        toggleBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('[SIDEBAR] Toggle clicado');
             sidebar.classList.toggle('collapsed');
         });
     }
     
     if (mobileToggle) {
-        mobileToggle.addEventListener('click', function() {
+        console.log('   Botao mobile encontrado');
+        mobileToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('[SIDEBAR] Mobile toggle clicado');
             sidebar.classList.toggle('active');
         });
     }
+    
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(item => {
+        item.addEventListener('click', function() {
+            if (window.innerWidth < 768) {
+                sidebar.classList.remove('active');
+            }
+        });
+    });
 }
 
 // ========== TEMA ==========
 
 function setupTheme() {
+    console.log('🌛 [THEME] Configurando tema...');
     const themeToggle = document.getElementById('themeToggle');
     
     if (themeToggle) {
+        console.log('   Botao de tema encontrado');
         // Atualizar ícone e texto do botão
         updateThemeButton();
         
-        themeToggle.addEventListener('click', function() {
+        themeToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('🌛 [THEME] Clique no botao de tema detectado');
             const newTheme = CONFIG.theme === 'light' ? 'dark' : 'light';
+            console.log('   Alternando para:', newTheme);
             saveTheme(newTheme);
             updateThemeButton();
-            updateChartColors();
+            if (typeof updateChartColors === 'function') {
+                updateChartColors();
+            }
         });
+    } else {
+        console.warn('   ⚠️ Botao de tema nao encontrado');
     }
 }
 
@@ -825,6 +850,7 @@ async function loadReceitasData() {
     if (!isSupabaseConfigured() || !CONFIG.currentUser.id) return;
     
     try {
+        console.log('📥 [APP] Carregando receitas...');
         const { startDate, endDate } = getPeriodDates(CONFIG.period.type);
         
         const receitas = await getTransactionsByType(
@@ -834,9 +860,10 @@ async function loadReceitasData() {
             endDate ? endDate.toISOString() : null
         );
         
+        console.log('✅ [APP] Receitas carregadas:', receitas.length);
         renderTransactionsTable(receitas, 'receitasBody');
     } catch (error) {
-        console.error('Erro ao carregar receitas:', error);
+        console.error('❌ [APP] Erro ao carregar receitas:', error);
         showNotification('Erro ao carregar receitas', 'error');
     }
 }

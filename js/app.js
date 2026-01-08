@@ -10,10 +10,19 @@ async function initializeApp() {
         initSupabase();
     }
 
-    if (!CONFIG.currentUser.id) {
-        showLoginModal();
+    // Verificar se o usuário está logado no localStorage
+    const savedUser = localStorage.getItem('mordomoPay_user');
+    if (savedUser) {
+        try {
+            const userData = JSON.parse(savedUser);
+            CONFIG.currentUser = userData;
+            showDashboard();
+        } catch (e) {
+            console.error('Erro ao carregar usuário salvo:', e);
+            showLoginModal();
+        }
     } else {
-        showDashboard();
+        showLoginModal();
     }
 
     setupEventListeners();
@@ -47,11 +56,94 @@ function setupEventListeners() {
     }
 }
 
-// ========== NAVEGAÇÃO ENTRE ABAS ==========
+// ========== AUTENTICAÇÃO E LOGOUT ==========
+
+async function handleLogin() {
+    const userInput = document.getElementById('loginUser').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const errorDiv = document.getElementById('loginError');
+
+    if (!userInput || !password) {
+        showLoginError('Preencha todos os campos');
+        return;
+    }
+
+    try {
+        let query = supabaseClient.from('usuarios').select('*');
+        if (userInput.includes('@')) {
+            query = query.eq('email', userInput);
+        } else {
+            query = query.eq('celular', userInput.replace(/\D/g, ''));
+        }
+
+        const { data: users, error } = await query;
+        if (error) throw error;
+
+        if (!users || users.length === 0) {
+            showLoginError('Usuário não encontrado. Cadastre-se via WhatsApp!');
+            return;
+        }
+
+        const user = users[0];
+        if (user.senha !== password) {
+            showLoginError('Senha incorreta');
+            return;
+        }
+
+        // Sucesso no Login
+        saveUser(user.id, user.nome, user.celular);
+        showDashboard();
+        if (typeof showNotification === 'function') showNotification('Bem-vindo ao MordomoPay!', 'success');
+    } catch (err) {
+        console.error(err);
+        showLoginError('Erro ao conectar com o servidor');
+    }
+}
+
+function handleLogout() {
+    console.log('🚪 [APP] Realizando logout...');
+    localStorage.removeItem('mordomoPay_user');
+    // Resetar CONFIG
+    CONFIG.currentUser = { id: null, name: null, phone: null };
+    // Recarregar a página para limpar o estado e mostrar o login
+    window.location.reload();
+}
+
+function redirectToWhatsAppSignup() {
+    const phone = "5511999999999"; // Substitua pelo número do seu bot
+    const text = encodeURIComponent("Olá! Gostaria de me cadastrar no MordomoPay.");
+    window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
+}
+
+// ========== TRANSIÇÕES E NAVEGAÇÃO ==========
+
+function showDashboard() {
+    const loginModal = document.getElementById('loginModal');
+    if (loginModal) loginModal.classList.remove('active');
+    
+    const userNameEl = document.getElementById('userName');
+    if (userNameEl) userNameEl.textContent = CONFIG.currentUser.name;
+    
+    updateThemeUI();
+    navigateToPage('dashboard');
+}
+
+function showLoginModal() {
+    const loginModal = document.getElementById('loginModal');
+    if (loginModal) loginModal.classList.add('active');
+}
+
+function showLoginError(msg) {
+    const errorDiv = document.getElementById('loginError');
+    if (errorDiv) {
+        errorDiv.textContent = msg;
+        errorDiv.style.display = 'block';
+    } else {
+        alert(msg);
+    }
+}
 
 function navigateToPage(pageId) {
-    console.log(`📂 [NAV] Navegando para: ${pageId}`);
-    
     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
     const activeNav = document.querySelector(`[data-page="${pageId}"]`);
     if (activeNav) activeNav.classList.add('active');
@@ -69,7 +161,6 @@ function navigateToPage(pageId) {
     document.getElementById('pageTitle').textContent = titles[pageId] || 'Dashboard';
 
     const contentArea = document.getElementById('content');
-    
     if (pageId === 'dashboard') {
         renderDashboardLayout();
         loadDashboardData();
@@ -78,6 +169,8 @@ function navigateToPage(pageId) {
         loadPageSpecificData(pageId);
     }
 }
+
+// ========== LAYOUTS E DADOS (MANTIDOS) ==========
 
 function renderDashboardLayout() {
     const contentArea = document.getElementById('content');
@@ -140,8 +233,6 @@ function renderGenericPageLayout(pageId) {
     `;
 }
 
-// ========== CARREGAMENTO DE DADOS ==========
-
 async function loadDashboardData() {
     if (!isSupabaseConfigured() || !CONFIG.currentUser.id) return;
     try {
@@ -157,13 +248,11 @@ async function loadPageSpecificData(pageId) {
     const userId = CONFIG.currentUser.id;
     const header = document.getElementById('tableHeader');
     const tbody = document.getElementById('pageTableBody');
-    
     try {
         if (pageId === 'transacoes' || pageId === 'receitas' || pageId === 'despesas') {
             let data = await getTransactions(userId);
             if (pageId === 'receitas') data = data.filter(t => t.tipo === 'entrada' || t.tipo === 'receita');
             if (pageId === 'despesas') data = data.filter(t => t.tipo === 'saida' || t.tipo === 'despesa');
-            
             header.innerHTML = `<tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Tipo</th><th>Valor</th></tr>`;
             tbody.innerHTML = data.length ? data.map(t => `
                 <tr>
@@ -212,13 +301,12 @@ async function loadPageSpecificData(pageId) {
     } catch (err) { console.error(err); }
 }
 
-// ========== AUXILIARES ==========
-
 function updateSummaryCards(transactions) {
     let r = 0, d = 0;
     transactions.forEach(t => {
-        if (t.tipo === 'entrada' || t.tipo === 'receita') r += t.valor;
-        else d += t.valor;
+        const v = parseFloat(t.valor) || 0;
+        if (t.tipo === 'entrada' || t.tipo === 'receita') r += v;
+        else d += v;
     });
     const s = r - d;
     const h = r > 0 ? Math.min(100, Math.max(0, Math.round((s / r) * 100))) : 0;
@@ -233,7 +321,7 @@ function renderDashboardCharts(transactions) {
     const catData = {};
     transactions.filter(t => t.tipo === 'saida' || t.tipo === 'despesa').forEach(t => {
         const c = t.categoria_trasacoes?.descricao || 'Outros';
-        catData[c] = (catData[c] || 0) + t.valor;
+        catData[c] = (catData[c] || 0) + parseFloat(t.valor);
     });
     if (typeof createCategoryChart === 'function') createCategoryChart(catData);
 
@@ -242,8 +330,9 @@ function renderDashboardCharts(transactions) {
         const date = new Date(t.data);
         const key = `${date.getFullYear()}-${date.getMonth() + 1}`;
         if (!trendData[key]) trendData[key] = { receitas: 0, despesas: 0 };
-        if (t.tipo === 'entrada' || t.tipo === 'receita') trendData[key].receitas += t.valor;
-        else trendData[key].despesas += t.valor;
+        const v = parseFloat(t.valor) || 0;
+        if (t.tipo === 'entrada' || t.tipo === 'receita') trendData[key].receitas += v;
+        else trendData[key].despesas += v;
     });
     if (typeof createTrendChart === 'function') createTrendChart(trendData);
 }
@@ -262,36 +351,9 @@ function renderRecentTransactionsTable(transactions) {
     `).join('');
 }
 
-function showDashboard() {
-    document.getElementById('loginModal').classList.remove('active');
-    document.getElementById('userName').textContent = CONFIG.currentUser.name;
-    updateThemeUI();
-    navigateToPage('dashboard');
-}
-
-function showLoginModal() { document.getElementById('loginModal').classList.add('active'); }
 function formatCurrency(v) { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0); }
 function updateThemeUI() {
     document.documentElement.setAttribute('data-theme', CONFIG.theme);
     const i = document.querySelector('#themeToggle i');
     if (i) i.className = CONFIG.theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
 }
-
-async function handleLogin() {
-    const u = document.getElementById('loginUser').value.trim();
-    const p = document.getElementById('loginPassword').value;
-    try {
-        let q = supabaseClient.from('usuarios').select('*');
-        if (u.includes('@')) q = q.eq('email', u);
-        else q = q.eq('celular', u.replace(/\D/g, ''));
-        const { data: users, error } = await q;
-        if (error || !users || users.length === 0 || users[0].senha !== p) {
-            alert('Usuário ou senha incorretos');
-            return;
-        }
-        saveUser(users[0].id, users[0].nome, users[0].celular);
-        showDashboard();
-    } catch (err) { alert('Erro ao realizar login'); }
-}
-
-function handleLogout() { localStorage.removeItem('mordomoPay_user'); location.reload(); }

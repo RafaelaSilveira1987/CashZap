@@ -1,11 +1,44 @@
-// ========== LOGIN E CADASTRO ATUALIZADO ==========
+// ========== FUNÇÕES DE TRANSIÇÃO DE TELA ==========
+
+function showDashboard() {
+    console.log('🖥️ [UI] Mostrando Dashboard...');
+    const loginModal = document.getElementById('loginModal');
+    const dashboardContainer = document.getElementById('dashboardContainer');
+    
+    if (loginModal) loginModal.style.display = 'none';
+    if (dashboardContainer) {
+        dashboardContainer.style.display = 'flex';
+        // Inicializar componentes do dashboard
+        if (typeof initializeUI === 'function') initializeUI();
+        if (typeof loadDashboardData === 'function') loadDashboardData();
+    }
+}
+
+function showLoginModal() {
+    console.log('👤 [UI] Mostrando Tela de Login...');
+    const loginModal = document.getElementById('loginModal');
+    const dashboardContainer = document.getElementById('dashboardContainer');
+    
+    if (loginModal) loginModal.style.display = 'flex';
+    if (dashboardContainer) dashboardContainer.style.display = 'none';
+}
+
+// ========== LOGIN ATUALIZADO COM CORREÇÃO ==========
 
 async function handleLogin() {
     console.log('🔐 [LOGIN] Iniciando login...');
     
-    const userInput = document.getElementById('loginUser').value.trim();
-    const password = document.getElementById('loginPassword').value;
+    const userInputField = document.getElementById('loginUser');
+    const passwordField = document.getElementById('loginPassword');
     const errorDiv = document.getElementById('loginError');
+    
+    if (!userInputField || !passwordField) {
+        console.error('❌ [LOGIN] Campos de login não encontrados no DOM');
+        return;
+    }
+
+    const userInput = userInputField.value.trim();
+    const password = passwordField.value;
     
     if (errorDiv) errorDiv.style.display = 'none';
     
@@ -14,71 +47,51 @@ async function handleLogin() {
         return;
     }
     
-    if (!isSupabaseConfigured()) {
-        showLoginError('Supabase não configurado');
-        return;
-    }
-    
     try {
-        console.log('🔍 [LOGIN] Buscando usuário...');
-        
         // Buscar usuário por celular ou email
-        let query = supabaseClient
-            .from('usuarios')
-            .select('*');
+        let query = supabaseClient.from('usuarios').select('*');
         
-        // Verificar se é celular ou email
         if (userInput.includes('@')) {
             query = query.eq('email', userInput);
         } else {
-            // Remover caracteres especiais do celular para bater com o banco (apenas números)
             const celularLimpo = userInput.replace(/\D/g, '');
             query = query.eq('celular', celularLimpo);
         }
         
         const { data: users, error } = await query;
         
-        if (error) {
-            console.error('❌ [LOGIN] Erro ao buscar usuário:', error);
-            showLoginError('Erro ao buscar usuário no banco de dados');
-            return;
-        }
+        if (error) throw error;
         
         if (!users || users.length === 0) {
-            console.error('❌ [LOGIN] Usuário não encontrado');
-            showLoginError('Usuário não encontrado. Cadastre-se via WhatsApp primeiro!');
+            showLoginError('Usuário não encontrado. Cadastre-se via WhatsApp!');
             return;
         }
         
         const user = users[0];
-        console.log('✅ [LOGIN] Usuário encontrado:', user.nome);
         
-        // Validar senha
-        if (!user.senha) {
-            console.error('❌ [LOGIN] Usuário sem senha definida');
-            showLoginError('Usuário sem senha definida. Entre em contato com o suporte.');
-            return;
-        }
-
         if (user.senha !== password) {
-            console.error('❌ [LOGIN] Senha incorreta');
             showLoginError('Senha incorreta');
             return;
         }
         
-        // Login bem-sucedido
-        console.log('✅ [LOGIN] Login bem-sucedido');
-        saveUser(user.id, user.nome, user.celular);
+        // Sucesso no Login
+        console.log('✅ [LOGIN] Login bem-sucedido para:', user.nome);
         
-        if (typeof showNotification === 'function') {
-            showNotification('Login realizado com sucesso!', 'success');
+        // Salvar no CONFIG e LocalStorage (ajuste conforme sua config.js)
+        if (typeof saveUser === 'function') {
+            saveUser(user.id, user.nome, user.celular);
         }
         
+        if (typeof showNotification === 'function') {
+            showNotification('Bem-vindo(a) de volta!', 'success');
+        }
+        
+        // Chamar a função de transição corrigida
         showDashboard();
         
     } catch (error) {
-        console.error('❌ [LOGIN] Erro inesperado:', error);
-        showLoginError('Ocorreu um erro ao tentar fazer login');
+        console.error('❌ [LOGIN] Erro:', error);
+        showLoginError('Erro ao realizar login. Tente novamente.');
     }
 }
 

@@ -284,10 +284,10 @@ async function loadDashboardData() {
         if (typeof renderCalculadoraDizimoUI === 'function') renderCalculadoraDizimoUI();
         if (typeof renderProjecaoUI === 'function') renderProjecaoUI(transactions);
         
-        // Análise de IA (Log apenas por enquanto)
+        // Análise de IA e Alertas
         if (typeof analisarGastosIA === 'function') {
-            const sugestoes = analisarGastosIA(transactions);
-            sugestoes.forEach(s => console.log('💡 [IA SUGGESTION]', s.mensagem));
+            const { sugestoes, alertas } = analisarGastosIA(transactions);
+            if (typeof renderAlertasUI === 'function') renderAlertasUI(alertas, sugestoes);
         }
     } catch (err) { console.error(err); }
 }

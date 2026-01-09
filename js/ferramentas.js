@@ -8,15 +8,38 @@ const FERRAMENTAS = {
         return { dizimo, restante };
     },
 
-    // Projeções Financeiras
+    // Projeções Financeiras com Cenários
     projetarEconomia: function(valorMensal, meses, taxaJuros = 0.005) {
-        let total = 0;
-        const projecao = [];
-        for (let i = 1; i <= meses; i++) {
-            total = (total + valorMensal) * (1 + taxaJuros);
-            projecao.push({ mes: i, valor: total });
-        }
-        return projecao;
+        const calcular = (valor, taxa) => {
+            let total = 0;
+            for (let i = 1; i <= meses; i++) {
+                total = (total + valor) * (1 + taxa);
+            }
+            return total;
+        };
+
+        return {
+            realista: calcular(valorMensal, taxaJuros),
+            otimista: calcular(valorMensal * 1.2, taxaJuros + 0.002),
+            pessimista: calcular(valorMensal * 0.8, taxaJuros - 0.002)
+        };
+    },
+
+    // Comparativo Temporal
+    compararMeses: function(transacoes) {
+        const agora = new Date();
+        const mesAtual = agora.getMonth();
+        const mesPassado = mesAtual === 0 ? 11 : mesAtual - 1;
+        
+        const gastosMes = (mes) => transacoes
+            .filter(t => new Date(t.data).getMonth() === mes && (t.tipo === 'saida' || t.tipo === 'despesa'))
+            .reduce((acc, t) => acc + parseFloat(t.valor), 0);
+
+        const atual = gastosMes(mesAtual);
+        const passado = gastosMes(mesPassado);
+        const diferenca = passado > 0 ? ((atual / passado) - 1) * 100 : 0;
+
+        return { atual, passado, diferenca };
     }
 };
 
@@ -86,7 +109,29 @@ function renderProjecaoUI(transactions) {
     const container = document.getElementById('projecao-container');
     if (!container) return;
 
-    // Calcular média de economia mensal
+    // 1. Comparativo Temporal
+    const comp = FERRAMENTAS.compararMeses(transactions);
+    const compHtml = `
+        <div class="card mb-4">
+            <div class="card-header"><h3><i class="fas fa-history"></i> Comparativo Temporal</h3></div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="small mb-0">Este Mês: <strong>${formatCurrency(comp.atual)}</strong></p>
+                        <p class="small mb-0">Mês Passado: <strong>${formatCurrency(comp.passado)}</strong></p>
+                    </div>
+                    <div class="text-right">
+                        <span class="badge ${comp.diferenca <= 0 ? 'bg-success' : 'bg-danger'}">
+                            ${comp.diferenca <= 0 ? '✅' : '⚠️'} ${Math.abs(comp.diferenca).toFixed(1)}% 
+                            ${comp.diferenca <= 0 ? 'menos' : 'mais'} gastos
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // 2. Projeções com Cenários
     let r = 0, d = 0;
     transactions.forEach(t => {
         if (t.tipo === 'entrada' || t.tipo === 'receita') r += t.valor;
@@ -94,22 +139,32 @@ function renderProjecaoUI(transactions) {
     });
     
     const economiaMensal = Math.max(0, r - d);
-    const projecao = FERRAMENTAS.projetarEconomia(economiaMensal, 12);
-    const total12Meses = projecao[11].valor;
+    const proj = FERRAMENTAS.projetarEconomia(economiaMensal, 12);
 
-    container.innerHTML = `
+    const projHtml = `
         <div class="card projecao-card mb-4">
             <div class="card-header">
                 <h3><i class="fas fa-chart-line"></i> Projeção de Mordomia (12 meses)</h3>
             </div>
             <div class="card-body">
-                <p>Mantendo sua média atual de economia de <strong>${formatCurrency(economiaMensal)}</strong>:</p>
-                <div class="projecao-destaque">
-                    <span class="valor-projecao">${formatCurrency(total12Meses)}</span>
-                    <span class="label-projecao">Acumulados em 1 ano</span>
+                <div class="projecao-cenarios">
+                    <div class="cenario">
+                        <span class="label">Otimista</span>
+                        <span class="valor text-success">${formatCurrency(proj.otimista)}</span>
+                    </div>
+                    <div class="cenario destaque">
+                        <span class="label">Realista</span>
+                        <span class="valor">${formatCurrency(proj.realista)}</span>
+                    </div>
+                    <div class="cenario">
+                        <span class="label">Pessimista</span>
+                        <span class="valor text-danger">${formatCurrency(proj.pessimista)}</span>
+                    </div>
                 </div>
-                <p class="small mt-2">Considerando rendimento médio de 0.5% a.m.</p>
+                <p class="small mt-3 italic text-center">"O coração do homem planeja o seu caminho, mas o Senhor lhe dirige os passos." - Provérbios 16:9</p>
             </div>
         </div>
     `;
+
+    container.innerHTML = compHtml + projHtml;
 }

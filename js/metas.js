@@ -98,39 +98,62 @@ function analisarGastosIA(transacoes) {
     console.log('🤖 [IA] Analisando padrões de gastos...');
     
     const gastosPorCategoria = {};
+    const gastosPorDiaSemana = [0,0,0,0,0,0,0]; // Dom-Sab
+    const periodosMes = { '1-10': 0, '11-20': 0, '21-31': 0 };
+
     transacoes.filter(t => t.tipo === 'saida' || t.tipo === 'despesa').forEach(t => {
+        const valor = parseFloat(t.valor);
+        const data = new Date(t.data);
+        
+        // Por Categoria
         const catNome = t.categoria_trasacoes?.descricao || 'Outros';
-        gastosPorCategoria[catNome] = (gastosPorCategoria[catNome] || 0) + parseFloat(t.valor);
+        gastosPorCategoria[catNome] = (gastosPorCategoria[catNome] || 0) + valor;
+
+        // Por Dia da Semana
+        gastosPorDiaSemana[data.getDay()] += valor;
+
+        // Por Período do Mês
+        const dia = data.getDate();
+        if (dia <= 10) periodosMes['1-10'] += valor;
+        else if (dia <= 20) periodosMes['11-20'] += valor;
+        else periodosMes['21-31'] += valor;
     });
 
     const sugestoes = [];
     const alertas = [];
 
-    // Média fictícia para comparação (em um sistema real, viria do histórico)
-    const mediasCategorias = {
-        'Alimentação': 800,
-        'Transporte': 300,
-        'Lazer': 200,
-        'Saúde': 150
-    };
+    // 1. Análise de Padrões Temporais
+    const diaMaisCaro = gastosPorDiaSemana.indexOf(Math.max(...gastosPorDiaSemana));
+    const diasNomes = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+    if (Math.max(...gastosPorDiaSemana) > 0) {
+        alertas.push({
+            categoria: 'Padrão',
+            mensagem: `📊 Padrão detectado: Suas maiores despesas costumam ocorrer aos **${diasNomes[diaMaisCaro]}s**.`
+        });
+    }
 
+    const periodoMaisCaro = Object.keys(periodosMes).reduce((a, b) => periodosMes[a] > periodosMes[b] ? a : b);
+    if (periodosMes[periodoMaisCaro] > 0) {
+        alertas.push({
+            categoria: 'Padrão',
+            mensagem: `📅 Você tende a gastar mais no período de **${periodoMaisCaro}** do mês.`
+        });
+    }
+
+    // 2. Alertas de Gastos Excessivos e Sugestões (Lógica anterior mantida e refinada)
+    const mediasCategorias = { 'Alimentação': 800, 'Transporte': 300, 'Lazer': 200 };
     for (const [cat, valor] of Object.entries(gastosPorCategoria)) {
-        // 1. Alertas de Gastos Excessivos
         if (mediasCategorias[cat] && valor > mediasCategorias[cat] * 1.3) {
-            const excesso = ((valor / mediasCategorias[cat]) - 1) * 100;
             alertas.push({
                 categoria: cat,
-                mensagem: `⚠️ Atenção! Seus gastos com ${cat} este mês já são ${excesso.toFixed(0)}% maiores que a média.`
+                mensagem: `⚠️ Seus gastos com ${cat} estão ${((valor/mediasCategorias[cat]-1)*100).toFixed(0)}% acima da média.`
             });
         }
-
-        // 2. Sugestões de Economia
-        if (valor > 300 && (cat.toLowerCase().includes('delivery') || cat.toLowerCase().includes('lazer') || cat.toLowerCase().includes('alimentação'))) {
-            const economia = valor * 0.2;
+        if (valor > 300 && (cat.toLowerCase().includes('delivery') || cat.toLowerCase().includes('lazer'))) {
             sugestoes.push({
                 categoria: cat,
-                mensagem: `Você gastou ${formatCurrency(valor)} em ${cat} este mês. Reduzindo 20%, economizaria ${formatCurrency(economia)}.`,
-                versiculo: "Provérbios 21:20 - 'Na casa do sábio há comida escolhida e azeite, mas o tolo tudo desperdiça'"
+                mensagem: `Economizando 20% em ${cat}, você teria ${formatCurrency(valor*0.2)} extras para suas metas.`,
+                versiculo: "Provérbios 21:20"
             });
         }
     }

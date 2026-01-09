@@ -1,0 +1,263 @@
+{
+  "version": "6",
+  "name": "GranaZap Assistant",
+  "events": [],
+  "groups": [
+    {
+      "id": "group-start",
+      "title": "Início",
+      "blocks": [
+        {
+          "id": "block-welcome",
+          "type": "text",
+          "content": "Olá! Eu sou o assistente do GranaZap. 🚀\nVou te ajudar a controlar suas finanças de forma simples."
+        },
+        {
+          "id": "block-ask-name",
+          "type": "text input",
+          "options": {
+            "variableId": "var-nome",
+            "labels": {
+              "placeholder": "Como posso te chamar?"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "group-check-user",
+      "title": "Verificar Usuário",
+      "blocks": [
+        {
+          "id": "block-check-webhook",
+          "type": "webhook",
+          "options": {
+            "url": "https://seu-n8n.com/webhook/check-user",
+            "method": "POST",
+            "body": "{\n  \"phone\": \"{{user_phone}}\"\n}",
+            "responseVariableMapping": [
+              {
+                "variableId": "var-exists",
+                "bodyPath": "exists"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "group-condition",
+      "title": "Decisão",
+      "blocks": [
+        {
+          "id": "block-condition",
+          "type": "condition",
+          "options": {
+            "comparisons": [
+              {
+                "variableId": "var-exists",
+                "comparison": "is true"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "group-signup",
+      "title": "Cadastro",
+      "blocks": [
+        {
+          "id": "block-signup-msg",
+          "type": "text",
+          "content": "Vi que você ainda não tem conta. Vamos criar uma agora!"
+        },
+        {
+          "id": "block-ask-email",
+          "type": "email input",
+          "options": {
+            "variableId": "var-email",
+            "labels": {
+              "placeholder": "Qual o seu melhor e-mail?"
+            }
+          }
+        },
+        {
+          "id": "block-ask-password",
+          "type": "text input",
+          "options": {
+            "variableId": "var-senha",
+            "labels": {
+              "placeholder": "Crie uma senha para o dashboard:"
+            }
+          }
+        },
+        {
+          "id": "block-signup-webhook",
+          "type": "webhook",
+          "options": {
+            "url": "https://seu-n8n.com/webhook/typebot-cadastro",
+            "method": "POST",
+            "body": "{\n  \"nome\": \"{{var-nome}}\",\n  \"email\": \"{{var-email}}\",\n  \"senha\": \"{{var-senha}}\",\n  \"celular\": \"{{user_phone}}\"\n}"
+          }
+        },
+        {
+          "id": "block-signup-success",
+          "type": "text",
+          "content": "Pronto! Sua conta foi criada. ✅"
+        }
+      ]
+    },
+    {
+      "id": "group-menu",
+      "title": "Menu Principal",
+      "blocks": [
+        {
+          "id": "block-menu-msg",
+          "type": "text",
+          "content": "O que você deseja fazer hoje?"
+        },
+        {
+          "id": "block-menu-buttons",
+          "type": "buttons",
+          "options": {
+            "buttons": [
+              {
+                "id": "btn-register",
+                "content": "💰 Registrar Ganho/Gasto"
+              },
+              {
+                "id": "btn-balance",
+                "content": "📊 Ver Saldo"
+              },
+              {
+                "id": "btn-dashboard",
+                "content": "🌐 Acessar Dashboard"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "group-transaction",
+      "title": "Registro",
+      "blocks": [
+        {
+          "id": "block-trans-msg",
+          "type": "text input",
+          "options": {
+            "variableId": "var-mensagem",
+            "labels": {
+              "placeholder": "Ex: entrada 100 Salário ou saida 50 Almoço"
+            }
+          }
+        },
+        {
+          "id": "block-trans-webhook",
+          "type": "webhook",
+          "options": {
+            "url": "https://seu-n8n.com/webhook/typebot-transacao",
+            "method": "POST",
+            "body": "{\n  \"mensagem\": \"{{var-mensagem}}\",\n  \"celular\": \"{{user_phone}}\"\n}",
+            "responseVariableMapping": [
+              {
+                "variableId": "var-saldo",
+                "bodyPath": "saldo"
+              }
+            ]
+          }
+        },
+        {
+          "id": "block-trans-success",
+          "type": "text",
+          "content": "Registrado com sucesso! ✅\nSeu novo saldo é: R$ {{var-saldo}}"
+        }
+      ]
+    }
+  ],
+  "variables": [
+    {
+      "id": "var-nome",
+      "name": "nome"
+    },
+    {
+      "id": "var-email",
+      "name": "email"
+    },
+    {
+      "id": "var-senha",
+      "name": "senha"
+    },
+    {
+      "id": "var-exists",
+      "name": "exists"
+    },
+    {
+      "id": "var-mensagem",
+      "name": "mensagem"
+    },
+    {
+      "id": "var-saldo",
+      "name": "saldo"
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-1",
+      "from": {
+        "blockId": "block-ask-name"
+      },
+      "to": {
+        "groupId": "group-check-user"
+      }
+    },
+    {
+      "id": "edge-2",
+      "from": {
+        "blockId": "block-check-webhook"
+      },
+      "to": {
+        "groupId": "group-condition"
+      }
+    },
+    {
+      "id": "edge-3",
+      "from": {
+        "blockId": "block-condition",
+        "itemIndex": 0
+      },
+      "to": {
+        "groupId": "group-menu"
+      }
+    },
+    {
+      "id": "edge-4",
+      "from": {
+        "blockId": "block-condition"
+      },
+      "to": {
+        "groupId": "group-signup"
+      }
+    },
+    {
+      "id": "edge-5",
+      "from": {
+        "blockId": "block-signup-success"
+      },
+      "to": {
+        "groupId": "group-menu"
+      }
+    },
+    {
+      "id": "edge-6",
+      "from": {
+        "blockId": "block-menu-buttons",
+        "itemIndex": 0
+      },
+      "to": {
+        "groupId": "group-transaction"
+      }
+    }
+  ]
+}

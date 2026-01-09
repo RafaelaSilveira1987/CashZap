@@ -176,6 +176,9 @@ function renderDashboardLayout() {
     const contentArea = document.getElementById('content');
     contentArea.innerHTML = `
         <div class="page active" id="dashboard-page">
+            <!-- Módulo de Sabedoria -->
+            <div id="sabedoria-container" class="full-width mb-4"></div>
+
             <div class="summary-cards">
                 <div class="card card-receitas">
                     <div class="card-icon"><i class="fas fa-arrow-up"></i></div>
@@ -199,6 +202,17 @@ function renderDashboardLayout() {
                     </div>
                 </div>
             </div>
+
+            <!-- Metas Financeiras -->
+            <div class="card goals-card mb-4" style="display: block;">
+                <div class="card-header">
+                    <h3><i class="fas fa-bullseye"></i> Metas de Mordomia</h3>
+                </div>
+                <div id="goals-container" class="card-body">
+                    <p class="no-data">Carregando metas...</p>
+                </div>
+            </div>
+
             <div class="charts-section">
                 <div class="chart-container"><h3>Despesas por Categoria</h3><canvas id="categoryChart"></canvas></div>
                 <div class="chart-container"><h3>Tendências Mensais</h3><canvas id="trendChart"></canvas></div>
@@ -218,19 +232,41 @@ function renderDashboardLayout() {
 
 function renderGenericPageLayout(pageId) {
     const contentArea = document.getElementById('content');
-    contentArea.innerHTML = `
-        <div class="page active">
-            <div class="transactions-section">
-                <div class="section-header"><h3>${pageId.toUpperCase()}</h3></div>
-                <div class="table-container">
-                    <table class="transactions-table">
-                        <thead id="tableHeader"><tr><th>Carregando...</th></tr></thead>
-                        <tbody id="pageTableBody"><tr><td class="no-data">Buscando informações...</td></tr></tbody>
-                    </table>
+    if (pageId === 'configuracoes') {
+        contentArea.innerHTML = `
+            <div class="page active" id="configuracoes-page">
+                <div class="page-header"><h2>Configurações</h2></div>
+                <div class="card mb-4" style="display: block;">
+                    <div class="card-header"><h3><i class="fas fa-medal"></i> Minhas Conquistas</h3></div>
+                    <div id="badges-container" class="card-body"></div>
+                </div>
+                <div class="card" style="display: block;">
+                    <div class="card-header"><h3>Perfil e Sistema</h3></div>
+                    <div class="card-body">
+                        <div class="table-container">
+                            <table class="transactions-table">
+                                <tbody id="pageTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    `;
+        `;
+    } else {
+        contentArea.innerHTML = `
+            <div class="page active">
+                <div class="transactions-section">
+                    <div class="section-header"><h3>${pageId.toUpperCase()}</h3></div>
+                    <div class="table-container">
+                        <table class="transactions-table">
+                            <thead id="tableHeader"><tr><th>Carregando...</th></tr></thead>
+                            <tbody id="pageTableBody"><tr><td class="no-data">Buscando informações...</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
 }
 
 async function loadDashboardData() {
@@ -241,6 +277,16 @@ async function loadDashboardData() {
         updateSummaryCards(transactions);
         renderDashboardCharts(transactions);
         renderRecentTransactionsTable(transactions);
+
+        // Novos Módulos Mordomo Fiel
+        if (typeof renderSabedoriaUI === 'function') renderSabedoriaUI();
+        if (typeof renderMetasUI === 'function') renderMetasUI();
+        
+        // Análise de IA (Log apenas por enquanto)
+        if (typeof analisarGastosIA === 'function') {
+            const sugestoes = analisarGastosIA(transactions);
+            sugestoes.forEach(s => console.log('💡 [IA SUGGESTION]', s.mensagem));
+        }
     } catch (err) { console.error(err); }
 }
 
@@ -276,12 +322,12 @@ async function loadPageSpecificData(pageId) {
                 <tr><td>${u.nome}</td><td>${u.email}</td><td>${u.celular}</td><td>${u.status}</td></tr>
             `).join('') : '<tr><td colspan="4" class="no-data">Nenhum usuário encontrado</td></tr>';
         } else if (pageId === 'configuracoes') {
-            header.innerHTML = `<tr><th>Configuração</th><th>Valor</th></tr>`;
+            if (typeof renderBadgesUI === 'function') renderBadgesUI(['dizimista', 'mordomo']); // Exemplo
             tbody.innerHTML = `
                 <tr><td>Nome do Usuário</td><td>${CONFIG.currentUser.name}</td></tr>
                 <tr><td>ID do Usuário</td><td>${CONFIG.currentUser.id}</td></tr>
                 <tr><td>Tema Atual</td><td>${CONFIG.theme}</td></tr>
-                <tr><td>Versão do Sistema</td><td>1.0.0 (MordomoPay)</td></tr>
+                <tr><td>Versão do Sistema</td><td>1.1.0 (Mordomo Fiel)</td></tr>
             `;
         } else if (pageId === 'relatorios') {
             header.innerHTML = `<tr><th>Mês/Ano</th><th>Receitas</th><th>Despesas</th><th>Saldo</th></tr>`;

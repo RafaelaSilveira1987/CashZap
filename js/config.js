@@ -6,7 +6,7 @@ const CONFIG = {
     // Prioridade: localStorage > Valores Padrão
     supabase: {
         url: localStorage.getItem('supabaseUrl') || 'https://ktjpphfxulkymobkjvqo.supabase.co',
-        key: localStorage.getItem('supabaseKey') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0anBwaGZ4dWxreW1vYmtqdnFvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0NjE0NTcsImV4cCI6MjA3MzAzNzQ1N30.KxrzIALYjCApoD7Br4BMeNgmtcL89XCqEKbxfmbxPEk'
+        key: localStorage.getItem('supabaseKey') || 'sb_secret_vt_34shHD2vjIdn4rso3lg_Xc-KgTdW'
     },
     
     // Usuário atual

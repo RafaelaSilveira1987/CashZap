@@ -129,3 +129,90 @@ body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg-mai
     .header-right { display: none; } /* Simplificar mobile */
     .summary-cards { grid-template-columns: 1fr; }
 }
+
+/* ========== ESTILOS MORDOMO FIEL ========== */
+
+.full-width { width: 100%; grid-column: 1 / -1; }
+.mb-4 { margin-bottom: 1.5rem; }
+.mt-4 { margin-top: 1.5rem; }
+
+/* Sabedoria Card */
+.sabedoria-card {
+    background: var(--bg-card);
+    border-left: 4px solid var(--primary);
+    display: block; /* Sobrescrever display flex do .card */
+}
+.versiculo-text {
+    font-style: italic;
+    font-size: 1.1rem;
+    color: var(--text-main);
+    margin-bottom: 1rem;
+    display: block;
+}
+.versiculo-text cite {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--primary);
+    margin-top: 0.5rem;
+    font-weight: bold;
+}
+.dica-text {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+}
+
+/* Metas Card */
+.goals-card { display: block; }
+.goal-item {
+    margin-bottom: 1.5rem;
+}
+.goal-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+.goal-progress-container {
+    height: 12px;
+    background: var(--bg-main);
+    border-radius: 6px;
+    overflow: hidden;
+}
+.goal-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), #34d399);
+    transition: width 0.5s ease;
+}
+
+/* Badges */
+.badges-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+}
+.badge-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+    border-radius: 12px;
+    background: var(--bg-main);
+    transition: all 0.3s ease;
+    text-align: center;
+}
+.badge-item.bloqueado {
+    opacity: 0.4;
+    filter: grayscale(1);
+}
+.badge-item.conquistado {
+    border: 1px solid var(--primary);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+}
+.badge-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: var(--primary);
+}
+.badge-name {
+    font-size: 0.85rem;
+    font-weight: bold;
+}

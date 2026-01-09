@@ -280,7 +280,9 @@ async function loadDashboardData() {
 
         // Novos Módulos Mordomo Fiel
         if (typeof renderSabedoriaUI === 'function') renderSabedoriaUI();
-        if (typeof renderMetasUI === 'function') renderMetasUI();
+        if (typeof renderMetasUI === 'function') await renderMetasUI();
+        if (typeof renderCalculadoraDizimoUI === 'function') renderCalculadoraDizimoUI();
+        if (typeof renderProjecaoUI === 'function') renderProjecaoUI(transactions);
         
         // Análise de IA (Log apenas por enquanto)
         if (typeof analisarGastosIA === 'function') {
@@ -322,7 +324,7 @@ async function loadPageSpecificData(pageId) {
                 <tr><td>${u.nome}</td><td>${u.email}</td><td>${u.celular}</td><td>${u.status}</td></tr>
             `).join('') : '<tr><td colspan="4" class="no-data">Nenhum usuário encontrado</td></tr>';
         } else if (pageId === 'configuracoes') {
-            if (typeof renderBadgesUI === 'function') renderBadgesUI(['dizimista', 'mordomo']); // Exemplo
+            if (typeof renderBadgesUI === 'function') await renderBadgesUI();
             tbody.innerHTML = `
                 <tr><td>Nome do Usuário</td><td>${CONFIG.currentUser.name}</td></tr>
                 <tr><td>ID do Usuário</td><td>${CONFIG.currentUser.id}</td></tr>

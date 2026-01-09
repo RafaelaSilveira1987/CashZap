@@ -17,7 +17,7 @@ const SABEDORIA = {
         "Contentamento é a chave para a paz financeira: aprenda a viver com o que Deus proveu."
     ],
     
-    badges: [
+    badges_info: [
         { id: 'dizimista', nome: "🌱 Dizimista Fiel", desc: "3 meses consecutivos de dízimo", icone: "fa-seedling" },
         { id: 'mordomo', nome: "💎 Mordomo Fiel", desc: "30 dias sem gastos supérfluos", icone: "fa-gem" },
         { id: 'gestor', nome: "🏆 Gestor Sábio", desc: "6 meses de economia positiva", icone: "fa-trophy" },
@@ -59,20 +59,28 @@ function renderSabedoriaUI() {
     }
 }
 
-function renderBadgesUI(userBadges = []) {
+async function renderBadgesUI() {
     const container = document.getElementById('badges-container');
-    if (container) {
-        let html = '<div class="badges-grid">';
-        SABEDORIA.badges.forEach(badge => {
-            const conquistado = userBadges.includes(badge.id);
-            html += `
-                <div class="badge-item ${conquistado ? 'conquistado' : 'bloqueado'}" title="${badge.desc}">
-                    <div class="badge-icon"><i class="fas ${badge.icone}"></i></div>
-                    <span class="badge-name">${badge.nome}</span>
-                </div>
-            `;
-        });
-        html += '</div>';
-        container.innerHTML = html;
-    }
+    if (!container) return;
+
+    const userId = CONFIG.currentUser.id;
+    const { data: userBadges, error } = await supabaseClient
+        .from('badges')
+        .select('nome')
+        .eq('usuario_id', userId);
+
+    const conquistados = userBadges ? userBadges.map(b => b.nome) : [];
+
+    let html = '<div class="badges-grid">';
+    SABEDORIA.badges_info.forEach(badge => {
+        const conquistado = conquistados.includes(badge.nome) || conquistados.includes(badge.id);
+        html += `
+            <div class="badge-item ${conquistado ? 'conquistado' : 'bloqueado'}" title="${badge.desc}">
+                <div class="badge-icon"><i class="fas ${badge.icone}"></i></div>
+                <span class="badge-name">${badge.nome}</span>
+            </div>
+        `;
+    });
+    html += '</div>';
+    container.innerHTML = html;
 }

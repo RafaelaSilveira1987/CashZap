@@ -216,3 +216,39 @@ body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg-mai
     font-size: 0.85rem;
     font-weight: bold;
 }
+
+/* ========== ESTILOS FERRAMENTAS E PROJEÇÕES ========== */
+
+.tools-card, .projecao-card { display: block; }
+.form-control {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-main);
+    color: var(--text-main);
+    margin-top: 5px;
+}
+.italic { font-style: italic; }
+.small { font-size: 0.8rem; }
+
+.projecao-destaque {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    background: rgba(16, 185, 129, 0.1);
+    border-radius: 16px;
+    margin: 15px 0;
+}
+.valor-projecao {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--primary);
+}
+.label-projecao {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
